@@ -26,6 +26,8 @@ sista::Border border(
     }
 );
 std::mutex streamMutex;
+bool speedup = false;
+bool pause_ = false;
 bool end = false;
 
 
@@ -47,10 +49,15 @@ int main(int argc, char* argv[]) {
     field->print(border);
     printSideInstructions(0);
     std::thread th(input);
-    do {
-        std::this_thread::sleep_for(std::chrono::milliseconds(FRAME_DURATION));
+    for (int i=0; !end; i++) {
+        while (pause_) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(
+            (int)(FRAME_DURATION / (std::pow(1 + (int)speedup, 2)))
+        ));
         std::flush(std::cout);
-    } while (!end);
+    }
 
     end = true;
     th.join();
@@ -240,12 +247,12 @@ void act(char input_) {
             Player::player->mode = Player::Mode::MINE;
             break;
 
-        // case '+': case '-':
-        //     speedup = !speedup;
-        //     break;
-        // case '.': case 'p': case 'P':
-        //     pause_ = !pause_;
-        //     break;
+        case '+': case '-':
+            speedup = !speedup;
+            break;
+        case '.': case 'p': case 'P':
+            pause_ = !pause_;
+            break;
         case 'Q': /* case 'q': */
             end = true;
             return;
