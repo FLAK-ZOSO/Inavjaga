@@ -18,8 +18,8 @@ sista::SwappableField* field;
 sista::Cursor cursor;
 sista::Border border(
     '@', {
-        ANSI::ForegroundColor::F_BLACK,
-        ANSI::BackgroundColor::B_WHITE,
+        ANSI::RGBColor(10, 10, 10),
+        ANSI::RGBColor(100, 100, 100),
         ANSI::Attribute::BRIGHT
     }
 );
@@ -89,8 +89,8 @@ Wall::Wall(sista::Coordinates coordinates, short int strength) :
     Wall::walls.push_back(this);
 }
 ANSI::Settings Wall::wallStyle = {
-    ANSI::ForegroundColor::F_BLUE,
-    ANSI::BackgroundColor::B_BLACK,
+    ANSI::RGBColor(10, 10, 10),
+    ANSI::RGBColor(100, 100, 100),
     ANSI::Attribute::BRIGHT
 };
 
