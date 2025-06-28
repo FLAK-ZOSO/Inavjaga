@@ -26,6 +26,9 @@ extern std::unordered_map<Direction, char> directionSymbol;
 extern std::mt19937 rng;
 
 void generateTunnels();
+void printSideInstructions(int);
+void input();
+void act(char);
 
 
 struct Inventory {
