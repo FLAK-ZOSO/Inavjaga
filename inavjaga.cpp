@@ -11,6 +11,7 @@
 #define HEIGHT 30
 
 #define TUNNEL_UNIT 2
+#define FRAME_DURATION 100
 
 Player* Player::player;
 std::vector<Wall*> Wall::walls;
@@ -41,13 +42,15 @@ int main(int argc, char* argv[]) {
     field = &field_;
     generateTunnels();
     Player::player = new Player({0, 0});
+    Player::player->mode = Player::Mode::BULLET;
     field->addPawn(Player::player);
     field->print(border);
     printSideInstructions(0);
-
     std::thread th(input);
-    std::this_thread::sleep_for(std::chrono::seconds(2));
-    std::flush(std::cout);
+    do {
+        std::this_thread::sleep_for(std::chrono::milliseconds(FRAME_DURATION));
+        std::flush(std::cout);
+    } while (!end);
 
     end = true;
     th.join();
@@ -271,16 +274,26 @@ ANSI::Settings Wall::wallStyle = {
 Player::Player(sista::Coordinates coordinates) : Entity('$', coordinates, playerStyle, Type::PLAYER), mode(Player::Mode::COLLECT), inventory({0, 0, 0}) {}
 Player::Player() : Entity('$', {0, 0}, playerStyle, Type::PLAYER), mode(Player::Mode::COLLECT), inventory({0, 0, 0}) {}
 void Player::move(Direction direction) {
-    sista::Coordinates nextCoordinates = coordinates + directionMap[direction];
-    if (field->isFree(nextCoordinates)) {
-        field->movePawn(this, nextCoordinates);
-    } else if (field->isOutOfBounds(nextCoordinates)) {
+    sista::Coordinates next = this->coordinates + directionMap[direction];
+    if (field->isFree(next)) {
+        field->movePawn(this, next);
+    } else if (field->isOutOfBounds(next)) {
         return;
-    } else if (field->isOccupied(nextCoordinates)) {
-        Entity* entity = (Entity*)field->getPawn(nextCoordinates);
+    } else if (field->isOccupied(next)) {
+        Entity* entity = (Entity*)field->getPawn(next);
         if (entity->type == Type::WALL) {
             return;
         }
+    }
+}
+void Player::shoot(Direction direction) {
+    sista::Coordinates target = this->coordinates + directionMap[direction];
+    if (!field->isFree(target)) return;
+
+    switch (this->mode) {
+        // TODO: add modes
+        default:
+            return;
     }
 }
 ANSI::Settings Player::playerStyle = {
