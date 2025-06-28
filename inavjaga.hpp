@@ -29,6 +29,7 @@ void generateTunnels();
 void printSideInstructions(int);
 void input();
 void act(char);
+void deallocateAll();
 
 
 struct Inventory {

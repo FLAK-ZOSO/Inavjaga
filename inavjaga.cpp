@@ -1,5 +1,6 @@
 #include "cross_platform.hpp"
 #include "inavjaga.hpp"
+#include <algorithm>
 #include <thread>
 #include <chrono>
 #include <mutex>
@@ -47,19 +48,20 @@ int main(int argc, char* argv[]) {
     Player::player->mode = Player::Mode::BULLET;
     field->addPawn(Player::player);
     field->print(border);
-    printSideInstructions(0);
     std::thread th(input);
     for (int i=0; !end; i++) {
         while (pause_) {
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
+        printSideInstructions(i);
         std::this_thread::sleep_for(std::chrono::milliseconds(
             (int)(FRAME_DURATION / (std::pow(1 + (int)speedup, 2)))
-        ));
+        )); // If there is speedup, the waiting time is reduced by a factor of 4
         std::flush(std::cout);
     }
 
     end = true;
+    deallocateAll();
     th.join();
     field->clear();
     cursor.set(72, 0); // Move the cursor to the bottom of the screen, so the terminal is not left in a weird state
@@ -261,6 +263,12 @@ void act(char input_) {
     }
 }
 
+void deallocateAll() {
+    for (auto wall : Wall::walls) {
+        delete wall;
+    }
+}
+
 // Entity::Entity() : sista::Pawn(' ', sista::Coordinates(0, 0), Player::playerStyle), type(Type::PLAYER) {}
 Entity::Entity(char symbol, sista::Coordinates coordinates, ANSI::Settings& settings, Type type) :
     sista::Pawn(symbol, coordinates, settings), type(type) {}
@@ -270,6 +278,11 @@ Wall::Wall() : Entity('#', {0, 0}, wallStyle, Type::WALL) {}
 Wall::Wall(sista::Coordinates coordinates, short int strength) :
     Entity('#', coordinates, wallStyle, Type::WALL), strength(strength) {
     Wall::walls.push_back(this);
+}
+void Wall::removeWall(Wall* wall) {
+    Wall::walls.erase(std::find(Wall::walls.begin(), Wall::walls.end(), wall));
+    field->erasePawn(wall);
+    delete wall;
 }
 ANSI::Settings Wall::wallStyle = {
     ANSI::RGBColor(10, 10, 10),
