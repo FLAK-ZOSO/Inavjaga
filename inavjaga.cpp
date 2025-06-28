@@ -36,23 +36,7 @@ int main(int argc, char* argv[]) {
 
     sista::SwappableField field_(WIDTH, HEIGHT);
     field = &field_;
-
-    for (int row=0; row<HEIGHT; row++) {
-        if (row % (TUNNEL_UNIT * 3) >= TUNNEL_UNIT) {
-            for (int column=0; column<WIDTH; column++) {
-                if (column < TUNNEL_UNIT * 2
-                    && (row / TUNNEL_UNIT / 3) % 2 == 0) {
-                    // On "even" horizontal tunnels we leave tunnel space on the left
-                    column = TUNNEL_UNIT * 2;
-                } else if (column >= WIDTH-(TUNNEL_UNIT * 2)
-                            && (row / TUNNEL_UNIT / 3) % 2 == 1) {
-                    break; // On "odd" horizontal tunnels we leave tunnel space on the right
-                }
-                Wall::walls.push_back(new Wall((sista::Coordinates){row, column}, row));
-                field->addPawn(Wall::walls.back());
-            }
-        }
-    }
+    generateTunnels();
 
     field->print(border);
     std::this_thread::sleep_for(std::chrono::seconds(2));
@@ -75,6 +59,25 @@ int main(int argc, char* argv[]) {
 }
 
 
+void generateTunnels() {
+    for (int row=0; row<HEIGHT; row++) {
+        if (row % (TUNNEL_UNIT * 3) >= TUNNEL_UNIT) {
+            for (int column=0; column<WIDTH; column++) {
+                if (column < TUNNEL_UNIT * 2
+                    && (row / TUNNEL_UNIT / 3) % 2 == 0) {
+                    // On "even" horizontal tunnels we leave tunnel space on the left
+                    column = TUNNEL_UNIT * 2;
+                } else if (column >= WIDTH-(TUNNEL_UNIT * 2)
+                            && (row / TUNNEL_UNIT / 3) % 2 == 1) {
+                    break; // On "odd" horizontal tunnels we leave tunnel space on the right
+                }
+                field->addPawn(new Wall({row, column}, row));
+            }
+        }
+    }
+}
+
+
 // Entity::Entity() : sista::Pawn(' ', sista::Coordinates(0, 0), Player::playerStyle), type(Type::PLAYER) {}
 Entity::Entity(char symbol, sista::Coordinates coordinates, ANSI::Settings& settings, Type type) :
     sista::Pawn(symbol, coordinates, settings), type(type) {}
@@ -82,7 +85,9 @@ Entity::Entity(char symbol, sista::Coordinates coordinates, ANSI::Settings& sett
 
 Wall::Wall() : Entity('#', {0, 0}, wallStyle, Type::WALL) {}
 Wall::Wall(sista::Coordinates coordinates, short int strength) :
-    Entity('#', coordinates, wallStyle, Type::WALL), strength(strength) {}
+    Entity('#', coordinates, wallStyle, Type::WALL), strength(strength) {
+    Wall::walls.push_back(this);
+}
 ANSI::Settings Wall::wallStyle = {
     ANSI::ForegroundColor::F_RED,
     ANSI::BackgroundColor::B_BLUE,
