@@ -89,8 +89,8 @@ Wall::Wall(sista::Coordinates coordinates, short int strength) :
     Wall::walls.push_back(this);
 }
 ANSI::Settings Wall::wallStyle = {
-    ANSI::ForegroundColor::F_RED,
-    ANSI::BackgroundColor::B_BLUE,
+    ANSI::ForegroundColor::F_BLUE,
+    ANSI::BackgroundColor::B_BLACK,
     ANSI::Attribute::BRIGHT
 };
 
