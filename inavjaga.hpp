@@ -33,9 +33,9 @@ void deallocateAll();
 
 
 struct Inventory {
-    short walls = 0;
-    short eggs = 0;
-    short meat = 0;
+    short clay;
+    short bullets;
+    short meat;
 
     void operator+=(const Inventory&);
 }; // The idea is that the inventory can be dropped (as CHEST) and picked up by the player

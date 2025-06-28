@@ -8,7 +8,7 @@
 #define VERSION "0.0.1"
 #define DATE "2025-06-28"
 
-#define WIDTH 70
+#define WIDTH 100
 #define HEIGHT 30
 
 #define TUNNEL_UNIT 2
@@ -52,11 +52,13 @@ int main(int argc, char* argv[]) {
     for (int i=0; !end; i++) {
         while (pause_) {
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            if (end) break;
         }
-        printSideInstructions(i);
         std::this_thread::sleep_for(std::chrono::milliseconds(
             (int)(FRAME_DURATION / (std::pow(1 + (int)speedup, 2)))
         )); // If there is speedup, the waiting time is reduced by a factor of 4
+        std::lock_guard<std::mutex> lock(streamMutex); // Lock stays until scope ends
+        printSideInstructions(i);
         std::flush(std::cout);
     }
 
@@ -65,7 +67,6 @@ int main(int argc, char* argv[]) {
     th.join();
     field->clear();
     cursor.set(72, 0); // Move the cursor to the bottom of the screen, so the terminal is not left in a weird state
-    std::this_thread::sleep_for(std::chrono::seconds(2));
     flushInput();
     #if __linux__
         getch();
@@ -83,17 +84,17 @@ int main(int argc, char* argv[]) {
 void printSideInstructions(int i) {
     // Print the inventory
     ANSI::reset();
-    cursor.set(3, 80);
+    cursor.set(3, WIDTH + 10);
     ANSI::setAttribute(ANSI::Attribute::BRIGHT);
     std::cout << "Inventory\n";
     ANSI::resetAttribute(ANSI::Attribute::BRIGHT);
-    cursor.set(4, 80);
-    std::cout << "Walls: " << Player::player->inventory.walls << "   \n";
-    cursor.set(5, 80);
-    std::cout << "Eggs: " << Player::player->inventory.eggs << "   \n";
-    cursor.set(6, 80);
+    cursor.set(4, WIDTH + 10);
+    std::cout << "Clay: " << Player::player->inventory.clay << "   \n";
+    cursor.set(5, WIDTH + 10);
+    std::cout << "Bullets: " << Player::player->inventory.bullets << "   \n";
+    cursor.set(6, WIDTH + 10);
     std::cout << "Meat: " << Player::player->inventory.meat << "   \n";
-    cursor.set(7, 80);
+    cursor.set(7, WIDTH + 10);
     std::cout << "Mode: ";
     switch (Player::player->mode) {
         case Player::Mode::COLLECT:
@@ -113,47 +114,41 @@ void printSideInstructions(int i) {
             break;
     }
     std::cout << "      ";
-    cursor.set(10, 80);
+    cursor.set(10, WIDTH + 10);
     ANSI::setAttribute(ANSI::Attribute::BRIGHT);
     std::cout << "Time survived: " << i << "    \n";
     ANSI::resetAttribute(ANSI::Attribute::BRIGHT);
-    cursor.set(11, 80);
-    // Be aware not to overwrite the inventory and the time survived which use {3, 80} to ~{11, 80}
+    cursor.set(11, WIDTH + 10);
+    // Be aware not to overwrite the inventory and the time survived which use {3, WIDTH + 10} to ~{11, WIDTH + 10}
     #if __linux__
     if (i % 10 == 9) {
     #elif __APPLE__ or _WIN32
     if (i % 100 == 99 || i == 0) {
     #endif
-        cursor.set(15, 80);
+        cursor.set(12, WIDTH + 10);
         ANSI::setAttribute(ANSI::Attribute::BRIGHT);
         std::cout << "Instructions\n";
         ANSI::resetAttribute(ANSI::Attribute::BRIGHT);
-        cursor.set(16, 80);
-        std::cout << "Move: w | a | s | d\n";
-        cursor.set(17, 80);
-        std::cout << "Act: i | j | k | l\n";
-        cursor.set(18, 80);
-        std::cout << "Collect mode: \x1b[35mc\x1b[0m\n";
-        cursor.set(19, 80);
-        std::cout << "Bullet mode: \x1b[35mb\x1b[0m\n";
-        cursor.set(20, 80);
-        std::cout << "Dump Chest mode: \x1b[35me\x1b[0m\n";
-        cursor.set(21, 80);
-        std::cout << "Build Wall mode: \x1b[35m=\x1b[0m | \x1b[35m0\x1b[0m | \x1b[35m#\x1b[0m\n";
-        cursor.set(22, 80);
-        std::cout << "Build Gate mode: \x1b[35mg\x1b[0m\n";
-        cursor.set(23, 80);
-        std::cout << "Place Trap mode: \x1b[35mt\x1b[0m\n";
-        cursor.set(24, 80);
-        std::cout << "Place Mine mode: \x1b[35mm\x1b[0m | \x1b[35m*\x1b[0m\n";
-        cursor.set(25, 80);
-        std::cout << "Egg-hatching mode: \x1b[35mh\x1b[0m\n";
-        cursor.set(27, 80);
-        std::cout << "Speedup mode: \x1b[35m+\x1b[0m | \x1b[35m-\x1b[0m\n";
-        cursor.set(28, 80);
-        std::cout << "Pause or resume: \x1b[35m.\x1b[0m | \x1b[35mp\x1b[0m\n";
-        cursor.set(29, 80);
-        std::cout << "Q: Quit\n";
+        cursor.set(13, WIDTH + 10);
+        std::cout << "Move: \x1b[35mw\x1b[37m | \x1b[35ma\x1b[37m | \x1b[35ms\x1b[37m | \x1b[35md\x1b[37m\n";
+        cursor.set(14, WIDTH+10);
+        std::cout << "Act: \x1b[35mi\x1b[37m | \x1b[35mj\x1b[37m | \x1b[35mk\x1b[37m | \x1b[35ml\x1b[37m\n";
+        cursor.set(16, WIDTH + 10);
+        std::cout << "Collect mode: \x1b[35mc\x1b[37m\n";
+        cursor.set(17, WIDTH + 10);
+        std::cout << "Bullet mode: \x1b[35mb\x1b[37m\n";
+        cursor.set(18, WIDTH + 10);
+        std::cout << "Dump Chest mode: \x1b[35me\x1b[37m\n";
+        cursor.set(19, WIDTH + 10);
+        std::cout << "Place Trap mode: \x1b[35mt\x1b[37m\n";
+        cursor.set(20, WIDTH + 10);
+        std::cout << "Place Mine mode: \x1b[35mm\x1b[37m | \x1b[35m*\x1b[37m\n";
+        cursor.set(22, WIDTH + 10);
+        std::cout << "Speedup mode: \x1b[35m+\x1b[37m | \x1b[35m-\x1b[37m\n";
+        cursor.set(23, WIDTH + 10);
+        std::cout << "Pause or resume: \x1b[35m.\x1b[37m | \x1b[35mp\x1b[37m\n";
+        cursor.set(24, WIDTH + 10);
+        std::cout << "Quit: \x1b[35mQ\x1b[37m\n";
     }
 }
 
@@ -336,7 +331,7 @@ std::unordered_map<Direction, char> directionSymbol = {
 std::mt19937 rng(std::chrono::system_clock::now().time_since_epoch().count());
 
 void Inventory::operator+=(const Inventory& other) {
-    walls += other.walls;
-    eggs += other.eggs;
+    clay += other.clay;
+    bullets += other.bullets;
     meat += other.meat;
 }
