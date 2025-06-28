@@ -150,7 +150,7 @@ void printSideInstructions(int i) {
 
 void generateTunnels() {
     for (int row=0; row<HEIGHT; row++) {
-        if (row % (TUNNEL_UNIT * 3) >= TUNNEL_UNIT) {
+        if (row % (TUNNEL_UNIT * 3) >= TUNNEL_UNIT * 2) {
             for (int column=0; column<WIDTH; column++) {
                 if (column < TUNNEL_UNIT * 2
                     && (row / TUNNEL_UNIT / 3) % 2 == 0) {
@@ -165,7 +165,6 @@ void generateTunnels() {
         }
     }
 }
-
 
 void input() {
     char input_ = '_';
