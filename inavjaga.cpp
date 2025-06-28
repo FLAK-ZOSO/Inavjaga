@@ -6,6 +6,13 @@
 #define VERSION "0.0.1"
 #define DATE "2025-06-28"
 
+#define WIDTH 70
+#define HEIGHT 30
+
+#define TUNNEL_UNIT 2
+
+Player* Player::player;
+std::vector<Wall*> Wall::walls;
 
 sista::SwappableField* field;
 sista::Cursor cursor;
@@ -27,7 +34,28 @@ int main(int argc, char* argv[]) {
     ANSI::reset(); // Reset the settings
     srand(time(0)); // Seed the random number generator
 
-    
+    sista::SwappableField field_(WIDTH, HEIGHT);
+    field = &field_;
+
+    for (int row=0; row<HEIGHT; row++) {
+        if (row % (TUNNEL_UNIT * 3) >= TUNNEL_UNIT) {
+            for (int column=0; column<WIDTH; column++) {
+                if (column < TUNNEL_UNIT * 2
+                    && (row / TUNNEL_UNIT / 3) % 2 == 0) {
+                    // On "even" horizontal tunnels we leave tunnel space on the left
+                    column = TUNNEL_UNIT * 2;
+                } else if (column >= WIDTH-(TUNNEL_UNIT * 2)
+                            && (row / TUNNEL_UNIT / 3) % 2 == 1) {
+                    break; // On "odd" horizontal tunnels we leave tunnel space on the right
+                }
+                Wall::walls.push_back(new Wall((sista::Coordinates){row, column}, row));
+                field->addPawn(Wall::walls.back());
+            }
+        }
+    }
+
+    field->print(border);
+    std::this_thread::sleep_for(std::chrono::seconds(2));
     
     field->clear();
     cursor.set(72, 0); // Move the cursor to the bottom of the screen, so the terminal is not left in a weird state
@@ -45,6 +73,21 @@ int main(int argc, char* argv[]) {
         tcsetattr(0, TCSANOW, &orig_termios);
     #endif
 }
+
+
+// Entity::Entity() : sista::Pawn(' ', sista::Coordinates(0, 0), Player::playerStyle), type(Type::PLAYER) {}
+Entity::Entity(char symbol, sista::Coordinates coordinates, ANSI::Settings& settings, Type type) :
+    sista::Pawn(symbol, coordinates, settings), type(type) {}
+
+
+Wall::Wall() : Entity('#', {0, 0}, wallStyle, Type::WALL) {}
+Wall::Wall(sista::Coordinates coordinates, short int strength) :
+    Entity('#', coordinates, wallStyle, Type::WALL), strength(strength) {}
+ANSI::Settings Wall::wallStyle = {
+    ANSI::ForegroundColor::F_RED,
+    ANSI::BackgroundColor::B_BLUE,
+    ANSI::Attribute::BRIGHT
+};
 
 
 std::unordered_map<Direction, sista::Coordinates> directionMap = {
