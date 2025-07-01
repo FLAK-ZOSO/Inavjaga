@@ -1,0 +1,4 @@
+- rocks should take damage randomly on the long term
+- when you kill a worm with an headshot, the rest of the body becomes bullets that you can harvest
+- the worms leave clay around
+- the field goes wearing out with time passing

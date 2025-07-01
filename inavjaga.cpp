@@ -129,12 +129,8 @@ void printSideInstructions(int i) {
     std::cout << "Time survived: " << i << "    \n";
     ANSI::resetAttribute(ANSI::Attribute::BRIGHT);
     cursor.set(11, WIDTH + 10);
-    // Be aware not to overwrite the inventory and the time survived which use {3, WIDTH + 10} to ~{11, WIDTH + 10}
-    #if __linux__
-    if (i % 10 == 9 || i == 0) {
-    #elif __APPLE__ or _WIN32
+
     if (i % 100 == 99 || i == 0) {
-    #endif
         cursor.set(12, WIDTH + 10);
         ANSI::setAttribute(ANSI::Attribute::BRIGHT);
         std::cout << "Instructions\n";
@@ -365,6 +361,7 @@ void Player::shoot(Direction direction) {
             if (--inventory.bullets >= 0) {
                 field->addPrintPawn(new Bullet(target, direction));
             }
+            inventory.bullets = std::max(inventory.bullets, (short)0);
             break;
         default:
             return;
