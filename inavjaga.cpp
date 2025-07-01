@@ -57,17 +57,17 @@ int main(int argc, char* argv[]) {
             (int)(FRAME_DURATION / (std::pow(1 + (int)speedup, 2)))
         )); // If there is speedup, the waiting time is reduced by a factor of 4
         std::lock_guard<std::mutex> lock(streamMutex); // Lock stays until scope ends
-        // for (unsigned j = 0; j < Bullet::bullets.size(); j++) {
-        //     Bullet* bullet = Bullet::bullets[j];
-        //     if (bullet == nullptr) continue;
-        //     if (bullet->collided) continue;
-        //     bullet->move();
-        // }
-        // for (Bullet* bullet : Bullet::bullets) {
-        //     if (bullet->collided) {
-        //         bullet->remove();
-        //     }
-        // }
+        for (unsigned j = 0; j < Bullet::bullets.size(); j++) {
+            Bullet* bullet = Bullet::bullets[j];
+            if (bullet == nullptr) continue;
+            if (bullet->collided) continue;
+            bullet->move();
+        }
+        for (Bullet* bullet : Bullet::bullets) {
+            if (bullet->collided) {
+                bullet->remove();
+            }
+        }
         printSideInstructions(i);
         std::flush(std::cout);
     }
@@ -317,6 +317,8 @@ void Bullet::move() {
     sista::Coordinates next = this->coordinates + directionMap[direction];
     if (field->isFree(next)) {
         field->movePawn(this, next);
+    } else if (field->isOutOfBounds(next)) {
+        this->remove();
     } else if (field->isOccupied(next)) {
         Entity* entity = (Entity*)field->getPawn(next);
         Type entityType = entity->type;
@@ -325,8 +327,8 @@ void Bullet::move() {
                 ((Wall*)entity)->getHit();
                 break;
         }
+        this->remove(); // Hit something and the situation was not handled
     }
-    this->remove(); // Couldn't move, or hit something
 }
 ANSI::Settings Bullet::bulletStyle = {
     ANSI::ForegroundColor::F_MAGENTA,
