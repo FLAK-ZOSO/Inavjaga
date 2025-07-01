@@ -10,6 +10,7 @@
 Player* Player::player;
 std::vector<Wall*> Wall::walls;
 std::vector<Bullet*> Bullet::bullets;
+std::vector<Chest*> Chest::chests;
 
 sista::SwappableField* field;
 sista::Cursor cursor;
@@ -332,6 +333,21 @@ ANSI::Settings Bullet::bulletStyle = {
     ANSI::Attribute::BRIGHT
 };
 
+Chest::Chest() : Entity('C', {0, 0}, chestStyle, Type::CHEST), inventory(INITIAL_INVENTORY) {}
+Chest::Chest(sista::Coordinates coordinates, Inventory inventory) : Entity('C', coordinates, chestStyle, Type::CHEST), inventory(inventory) {
+    Chest::chests.push_back(this);
+}
+void Chest::remove() {
+    Chest::chests.erase(std::find(Chest::chests.begin(), Chest::chests.end(), this));
+    field->erasePawn(this);
+    delete this;
+}
+ANSI::Settings Chest::chestStyle = {
+    ANSI::RGBColor(193, 201, 104),
+    ANSI::RGBColor(0, 0, 0),
+    ANSI::Attribute::REVERSE
+};
+
 Player::Player(sista::Coordinates coordinates) : Entity('$', coordinates, playerStyle, Type::PLAYER), mode(Player::Mode::COLLECT), inventory(INITIAL_INVENTORY) {}
 Player::Player() : Entity('$', {0, 0}, playerStyle, Type::PLAYER), mode(Player::Mode::COLLECT), inventory(INITIAL_INVENTORY) {}
 void Player::remove() {
@@ -353,7 +369,25 @@ void Player::move(Direction direction) {
 }
 void Player::shoot(Direction direction) {
     sista::Coordinates target = this->coordinates + directionMap[direction];
-    if (!field->isFree(target)) return;
+    if (!field->isFree(target)) {
+        if (field->isOutOfBounds(target)) return;
+        
+        Entity* entity = (Entity*)field->getPawn(target);
+        switch (this->mode) {
+            // TODO: add modes
+            case Mode::COLLECT: {
+                if (entity->type == Type::CHEST) {
+                    Chest* chest = (Chest*)entity;
+                    this->inventory += chest->inventory;
+                    chest->remove();
+                }
+                break;
+            }
+            default:
+                return;
+        }
+        return;
+    }
 
     switch (this->mode) {
         // TODO: add modes
@@ -362,6 +396,11 @@ void Player::shoot(Direction direction) {
                 field->addPrintPawn(new Bullet(target, direction));
             }
             inventory.bullets = std::max(inventory.bullets, (short)0);
+            break;
+        case Mode::DUMPCHEST:
+            // There is a check missing here... on purpose ;)
+            field->addPrintPawn(new Chest(target, this->inventory));
+            this->inventory = {0, 0, 0};
             break;
         default:
             return;

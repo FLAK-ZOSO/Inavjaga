@@ -96,3 +96,14 @@ public:
 
     void move();
 };
+
+class Chest : public Entity {
+public:
+    static ANSI::Settings chestStyle;
+    static std::vector<Chest*> chests;
+    Inventory inventory;
+
+    Chest();
+    Chest(sista::Coordinates, Inventory);
+    void remove() override;
+};
