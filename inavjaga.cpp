@@ -1,21 +1,15 @@
 #include "cross_platform.hpp"
+#include "constants.hpp"
 #include "inavjaga.hpp"
 #include <algorithm>
 #include <thread>
 #include <chrono>
 #include <mutex>
 
-#define VERSION "0.0.1"
-#define DATE "2025-06-28"
-
-#define WIDTH 100
-#define HEIGHT 30
-
-#define TUNNEL_UNIT 2
-#define FRAME_DURATION 100
 
 Player* Player::player;
 std::vector<Wall*> Wall::walls;
+std::vector<Bullet*> Bullet::bullets;
 
 sista::SwappableField* field;
 sista::Cursor cursor;
@@ -26,6 +20,11 @@ sista::Border border(
         ANSI::Attribute::BRIGHT
     }
 );
+const Inventory INITIAL_INVENTORY {
+    INITIAL_CLAY,
+    INITIAL_BULLETS,
+    INITIAL_MEAT
+};
 std::mutex streamMutex;
 bool speedup = false;
 bool pause_ = false;
@@ -51,13 +50,24 @@ int main(int argc, char* argv[]) {
     std::thread th(input);
     for (int i=0; !end; i++) {
         while (pause_) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
             if (end) break;
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(
             (int)(FRAME_DURATION / (std::pow(1 + (int)speedup, 2)))
         )); // If there is speedup, the waiting time is reduced by a factor of 4
         std::lock_guard<std::mutex> lock(streamMutex); // Lock stays until scope ends
+        // for (unsigned j = 0; j < Bullet::bullets.size(); j++) {
+        //     Bullet* bullet = Bullet::bullets[j];
+        //     if (bullet == nullptr) continue;
+        //     if (bullet->collided) continue;
+        //     bullet->move();
+        // }
+        // for (Bullet* bullet : Bullet::bullets) {
+        //     if (bullet->collided) {
+        //         bullet->remove();
+        //     }
+        // }
         printSideInstructions(i);
         std::flush(std::cout);
     }
@@ -121,7 +131,7 @@ void printSideInstructions(int i) {
     cursor.set(11, WIDTH + 10);
     // Be aware not to overwrite the inventory and the time survived which use {3, WIDTH + 10} to ~{11, WIDTH + 10}
     #if __linux__
-    if (i % 10 == 9) {
+    if (i % 10 == 9 || i == 0) {
     #elif __APPLE__ or _WIN32
     if (i % 100 == 99 || i == 0) {
     #endif
@@ -207,26 +217,26 @@ void act(char input_) {
             break;
         }
 
-        // case 'j': case 'J': {
-        //     std::lock_guard<std::mutex> lock(streamMutex);
-        //     Player::player->shoot(Direction::LEFT);
-        //     break;
-        // }
-        // case 'k': case 'K': {
-        //     std::lock_guard<std::mutex> lock(streamMutex);
-        //     Player::player->shoot(Direction::DOWN);
-        //     break;
-        // }
-        // case 'l': case 'L': {
-        //     std::lock_guard<std::mutex> lock(streamMutex);
-        //     Player::player->shoot(Direction::RIGHT);
-        //     break;
-        // }
-        // case 'i': case 'I': {
-        //     std::lock_guard<std::mutex> lock(streamMutex);
-        //     Player::player->shoot(Direction::UP);
-        //     break;
-        // }
+        case 'j': case 'J': {
+            std::lock_guard<std::mutex> lock(streamMutex);
+            Player::player->shoot(Direction::LEFT);
+            break;
+        }
+        case 'k': case 'K': {
+            std::lock_guard<std::mutex> lock(streamMutex);
+            Player::player->shoot(Direction::DOWN);
+            break;
+        }
+        case 'l': case 'L': {
+            std::lock_guard<std::mutex> lock(streamMutex);
+            Player::player->shoot(Direction::RIGHT);
+            break;
+        }
+        case 'i': case 'I': {
+            std::lock_guard<std::mutex> lock(streamMutex);
+            Player::player->shoot(Direction::UP);
+            break;
+        }
 
         case 'c': case 'C':
             Player::player->mode = Player::Mode::COLLECT;
@@ -262,6 +272,9 @@ void deallocateAll() {
     for (auto wall : Wall::walls) {
         delete wall;
     }
+    for (auto bullet : Bullet::bullets) {
+        delete bullet;
+    }
 }
 
 // Entity::Entity() : sista::Pawn(' ', sista::Coordinates(0, 0), Player::playerStyle), type(Type::PLAYER) {}
@@ -274,10 +287,15 @@ Wall::Wall(sista::Coordinates coordinates, short int strength) :
     Entity('#', coordinates, wallStyle, Type::WALL), strength(strength) {
     Wall::walls.push_back(this);
 }
-void Wall::removeWall(Wall* wall) {
-    Wall::walls.erase(std::find(Wall::walls.begin(), Wall::walls.end(), wall));
-    field->erasePawn(wall);
-    delete wall;
+void Wall::remove() {
+    Wall::walls.erase(std::find(Wall::walls.begin(), Wall::walls.end(), this));
+    field->erasePawn(this);
+    delete this;
+}
+void Wall::getHit() {
+    if (--strength <= 0) {
+        this->remove();
+    }
 }
 ANSI::Settings Wall::wallStyle = {
     ANSI::RGBColor(10, 10, 10),
@@ -285,8 +303,43 @@ ANSI::Settings Wall::wallStyle = {
     ANSI::Attribute::BRIGHT
 };
 
-Player::Player(sista::Coordinates coordinates) : Entity('$', coordinates, playerStyle, Type::PLAYER), mode(Player::Mode::COLLECT), inventory({0, 0, 0}) {}
-Player::Player() : Entity('$', {0, 0}, playerStyle, Type::PLAYER), mode(Player::Mode::COLLECT), inventory({0, 0, 0}) {}
+Bullet::Bullet() : Entity('>', {0, 0}, bulletStyle, Type::BULLET), direction(Direction::RIGHT), collided(false) {}
+Bullet::Bullet(sista::Coordinates coordinates, Direction direction) :
+    Entity(directionSymbol[direction], coordinates, bulletStyle, Type::BULLET), direction(direction), collided(false) {
+    Bullet::bullets.push_back(this);
+}
+void Bullet::remove() {
+    Bullet::bullets.erase(std::find(Bullet::bullets.begin(), Bullet::bullets.end(), this));
+    field->erasePawn(this);
+    delete this;
+}
+void Bullet::move() {
+    sista::Coordinates next = this->coordinates + directionMap[direction];
+    if (field->isFree(next)) {
+        field->movePawn(this, next);
+    } else if (field->isOccupied(next)) {
+        Entity* entity = (Entity*)field->getPawn(next);
+        Type entityType = entity->type;
+        switch (entityType) {
+            case Type::WALL:
+                ((Wall*)entity)->getHit();
+                break;
+        }
+    }
+    this->remove(); // Couldn't move, or hit something
+}
+ANSI::Settings Bullet::bulletStyle = {
+    ANSI::ForegroundColor::F_MAGENTA,
+    ANSI::BackgroundColor::B_BLACK,
+    ANSI::Attribute::BRIGHT
+};
+
+Player::Player(sista::Coordinates coordinates) : Entity('$', coordinates, playerStyle, Type::PLAYER), mode(Player::Mode::COLLECT), inventory(INITIAL_INVENTORY) {}
+Player::Player() : Entity('$', {0, 0}, playerStyle, Type::PLAYER), mode(Player::Mode::COLLECT), inventory(INITIAL_INVENTORY) {}
+void Player::remove() {
+    field->erasePawn(this);
+    delete this;
+}
 void Player::move(Direction direction) {
     sista::Coordinates next = this->coordinates + directionMap[direction];
     if (field->isFree(next)) {
@@ -306,6 +359,11 @@ void Player::shoot(Direction direction) {
 
     switch (this->mode) {
         // TODO: add modes
+        case Mode::BULLET:
+            if (--inventory.bullets >= 0) {
+                field->addPrintPawn(new Bullet(target, direction));
+            }
+            break;
         default:
             return;
     }

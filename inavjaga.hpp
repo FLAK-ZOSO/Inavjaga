@@ -47,6 +47,8 @@ public:
 
     Entity();
     Entity(char, sista::Coordinates, ANSI::Settings&, Type);
+    virtual ~Entity() {}
+    virtual void remove() = 0;
 };
 
 
@@ -62,6 +64,7 @@ public:
 
     Player();
     Player(sista::Coordinates);
+    void remove() override;
 
     void move(Direction);
     void shoot(Direction);
@@ -75,6 +78,21 @@ public:
 
     Wall();
     Wall(sista::Coordinates, short int);
+    void remove() override;
 
-    static void removeWall(Wall*);
+    void getHit();
+};
+
+class Bullet : public Entity {
+public:
+    static ANSI::Settings bulletStyle;
+    static std::vector<Bullet*> bullets;
+    Direction direction;
+    bool collided = false;
+
+    Bullet();
+    Bullet(sista::Coordinates, Direction);
+    void remove() override;
+
+    void move();
 };
