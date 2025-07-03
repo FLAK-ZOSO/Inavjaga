@@ -9,6 +9,7 @@
 Player* Player::player;
 std::vector<Wall*> Wall::walls;
 std::vector<Bullet*> Bullet::bullets;
+std::vector<EnemyBullet*> EnemyBullet::enemyBullets;
 std::vector<Chest*> Chest::chests;
 std::vector<Portal*> Portal::portals;
 std::vector<Mine*> Mine::mines;
@@ -66,6 +67,17 @@ int main(int argc, char* argv[]) {
             bullet->move();
         }
         for (Bullet* bullet : Bullet::bullets) {
+            if (bullet->collided) {
+                bullet->remove();
+            }
+        }
+        for (unsigned j = 0; j < EnemyBullet::enemyBullets.size(); j++) {
+            EnemyBullet* bullet = EnemyBullet::enemyBullets[j];
+            if (bullet == nullptr) continue;
+            if (bullet->collided) continue;
+            bullet->move();
+        }
+        for (EnemyBullet* bullet : EnemyBullet::enemyBullets) {
             if (bullet->collided) {
                 bullet->remove();
             }
@@ -362,6 +374,18 @@ void Bullet::move() {
             case Type::MINE:
                 ((Mine*)entity)->trigger();
                 break;
+            case Type::ENEMY_BULLET: {
+                EnemyBullet* bullet = (EnemyBullet*)entity;
+                if (bullet->collided) return;
+                bullet->collided = true;
+                break;
+            }
+            case Type::BULLET: {
+                Bullet* bullet = (Bullet*)entity;
+                if (bullet->collided) return;
+                bullet->collided = true;
+                break;
+            }
             default:
                 break;
         }
@@ -370,6 +394,56 @@ void Bullet::move() {
 }
 ANSI::Settings Bullet::bulletStyle = {
     ANSI::ForegroundColor::F_MAGENTA,
+    ANSI::BackgroundColor::B_BLACK,
+    ANSI::Attribute::BRIGHT
+};
+
+EnemyBullet::EnemyBullet() : Entity('>', {0, 0}, enemyBulletStyle, Type::BULLET), direction(Direction::RIGHT), collided(false) {}
+EnemyBullet::EnemyBullet(sista::Coordinates coordinates, Direction direction) :
+    Entity(directionSymbol[direction], coordinates, enemyBulletStyle, Type::BULLET), direction(direction), collided(false) {
+    EnemyBullet::enemyBullets.push_back(this);
+}
+void EnemyBullet::remove() {
+    EnemyBullet::enemyBullets.erase(std::find(EnemyBullet::enemyBullets.begin(), EnemyBullet::enemyBullets.end(), this));
+    field->erasePawn(this);
+    delete this;
+}
+void EnemyBullet::move() {
+    sista::Coordinates next = this->coordinates + directionMap[direction];
+    if (field->isFree(next)) {
+        field->movePawn(this, next);
+    } else if (field->isOutOfBounds(next)) {
+        this->remove();
+    } else if (field->isOccupied(next)) {
+        Entity* entity = (Entity*)field->getPawn(next);
+        Type entityType = entity->type;
+        switch (entityType) {
+            case Type::WALL:
+                ((Wall*)entity)->getHit();
+                break;
+            case Type::MINE:
+                ((Mine*)entity)->trigger();
+                break;
+            case Type::BULLET: {
+                Bullet* bullet = (Bullet*)entity;
+                if (bullet->collided) return;
+                bullet->collided = true;
+                break;
+            }
+            case Type::ENEMY_BULLET: {
+                EnemyBullet* bullet = (EnemyBullet*)entity;
+                if (bullet->collided) return;
+                bullet->collided = true;
+                break;
+            }
+            default:
+                break;
+        }
+        this->remove(); // Hit something and the situation was not handled
+    }
+}
+ANSI::Settings EnemyBullet::enemyBulletStyle = {
+    ANSI::ForegroundColor::F_GREEN,
     ANSI::BackgroundColor::B_BLACK,
     ANSI::Attribute::BRIGHT
 };
@@ -457,7 +531,7 @@ ANSI::Settings Mine::mineStyle = {
 ANSI::Settings Mine::triggeredMineStyle = {
     RGB_BLACK,
     ANSI::RGBColor(0xff, 0, 0),
-    ANSI::Attribute::RAPID_BLINK
+    ANSI::Attribute::BLINK
 };
 
 Player::Player(sista::Coordinates coordinates) : Entity('$', coordinates, playerStyle, Type::PLAYER), mode(Player::Mode::COLLECT), inventory(INITIAL_INVENTORY) {}

@@ -101,6 +101,20 @@ public:
     void move();
 };
 
+class EnemyBullet : public Entity {
+public:
+    static ANSI::Settings enemyBulletStyle;
+    static std::vector<EnemyBullet*> enemyBullets;
+    Direction direction;
+    bool collided = false;
+
+    EnemyBullet();
+    EnemyBullet(sista::Coordinates, Direction);
+    void remove() override;
+
+    void move();
+};
+
 class Chest : public Entity {
 public:
     static ANSI::Settings chestStyle;
