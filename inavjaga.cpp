@@ -11,12 +11,13 @@ Player* Player::player;
 std::vector<Wall*> Wall::walls;
 std::vector<Bullet*> Bullet::bullets;
 std::vector<Chest*> Chest::chests;
+std::vector<Portal*> Portal::portals;
 
 sista::SwappableField* field;
 sista::Cursor cursor;
 sista::Border border(
     '@', {
-        ANSI::RGBColor(10, 10, 10),
+        RGB_GAME_BACKGROUND,
         ANSI::RGBColor(100, 100, 100),
         ANSI::Attribute::BRIGHT
     }
@@ -160,8 +161,22 @@ void printSideInstructions(int i) {
 }
 
 void generateTunnels() {
+    std::uniform_int_distribution<int> distr(TUNNEL_UNIT * 2, WIDTH-(TUNNEL_UNIT * 2)); // Inclusive
+    int portalCoordinate;
     for (int row=0; row<HEIGHT; row++) {
-        if (row % (TUNNEL_UNIT * 3) >= TUNNEL_UNIT * 2) {
+        if (row % (TUNNEL_UNIT * 3) == 0 && row + TUNNEL_UNIT * 3 < HEIGHT) {
+            portalCoordinate = distr(rng);
+            std::cerr << "Building portals in {" << row + TUNNEL_UNIT * 2 << ", " << portalCoordinate << "}";
+            std::cerr << " and in {" << row + TUNNEL_UNIT * 3 - 1 << ", " << portalCoordinate << "}" << std::endl;
+            Portal* abovePortal = new Portal({row + TUNNEL_UNIT * 2, portalCoordinate});
+            Portal* belowPortal = new Portal({row + TUNNEL_UNIT * 3 - 1, portalCoordinate});
+            abovePortal->exit = belowPortal;
+            belowPortal->exit = abovePortal;
+            field->addPawn(abovePortal);
+            field->addPawn(belowPortal);
+        }
+
+        if (row % (TUNNEL_UNIT * 3) >= TUNNEL_UNIT * 2) { // Every two units skipped, one is built
             for (int column=0; column<WIDTH; column++) {
                 if (column < TUNNEL_UNIT * 2
                     && (row / TUNNEL_UNIT / 3) % 2 == 0) {
@@ -171,7 +186,9 @@ void generateTunnels() {
                             && (row / TUNNEL_UNIT / 3) % 2 == 1) {
                     break; // On "odd" horizontal tunnels we leave tunnel space on the right
                 }
-                field->addPawn(new Wall({row, column}, row % (TUNNEL_UNIT * 3)));
+                if (field->isFree((unsigned short)row, (unsigned short)column)) {
+                    field->addPawn(new Wall({row, column}, row % (TUNNEL_UNIT * 3)));
+                }
             }
         }
     }
@@ -272,6 +289,12 @@ void deallocateAll() {
     for (auto bullet : Bullet::bullets) {
         delete bullet;
     }
+    for (auto chest : Chest::chests) {
+        delete chest;
+    }
+    for (auto portal : Portal::portals) {
+        delete portal;
+    }
 }
 
 // Entity::Entity() : sista::Pawn(' ', sista::Coordinates(0, 0), Player::playerStyle), type(Type::PLAYER) {}
@@ -295,7 +318,7 @@ void Wall::getHit() {
     }
 }
 ANSI::Settings Wall::wallStyle = {
-    ANSI::RGBColor(10, 10, 10),
+    RGB_GAME_BACKGROUND,
     ANSI::RGBColor(100, 100, 100),
     ANSI::Attribute::BRIGHT
 };
@@ -344,8 +367,23 @@ void Chest::remove() {
 }
 ANSI::Settings Chest::chestStyle = {
     ANSI::RGBColor(193, 201, 104),
-    ANSI::RGBColor(0, 0, 0),
+    RGB_BLACK,
     ANSI::Attribute::REVERSE
+};
+
+Portal::Portal() : Entity('#', {0, 0}, portalStyle, Type::PORTAL) {}
+Portal::Portal(sista::Coordinates coordinates) : Entity('#', coordinates, portalStyle, Type::PORTAL) {
+    Portal::portals.push_back(this);
+}
+void Portal::remove() {
+    Portal::portals.erase(std::find(Portal::portals.begin(), Portal::portals.end(), this));
+    field->erasePawn(this);
+    delete this;
+}
+ANSI::Settings Portal::portalStyle = {
+    ANSI::RGBColor(100, 0, 0xff),
+    RGB_GAME_BACKGROUND,
+    ANSI::Attribute::STRIKETHROUGH
 };
 
 Player::Player(sista::Coordinates coordinates) : Entity('$', coordinates, playerStyle, Type::PLAYER), mode(Player::Mode::COLLECT), inventory(INITIAL_INVENTORY) {}

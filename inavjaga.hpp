@@ -7,7 +7,7 @@ enum Type {
     PLAYER,
     BULLET,
     WALL, // #
-    GATE, // =
+    PORTAL, // =
     CHEST, // C, can be collected by the player
     TRAP, // T, will act when stepped on
     MINE, // *, will be triggered when passing by
@@ -105,5 +105,17 @@ public:
 
     Chest();
     Chest(sista::Coordinates, Inventory);
+    void remove() override;
+};
+
+class Portal : public Entity {
+public:
+    static ANSI::Settings portalStyle;
+    static std::vector<Portal*> portals;
+    Portal* exit; // The matching portal
+
+    Portal();
+    Portal(sista::Coordinates);
+    Portal(sista::Coordinates, Portal*);
     void remove() override;
 };
