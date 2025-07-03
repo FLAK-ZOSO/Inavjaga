@@ -8,6 +8,7 @@
 
 // Game speed
 #define FRAME_DURATION 100
+#define BULLET_SPEED 1
 
 // Inventory
 #define INITIAL_CLAY 5

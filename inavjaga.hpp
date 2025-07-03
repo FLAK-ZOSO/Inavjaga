@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include <vector>
 #include <random>
+#include <map>
 
 enum Type {
     PLAYER,
@@ -25,6 +26,7 @@ enum Direction {UP, RIGHT, DOWN, LEFT};
 extern std::unordered_map<Direction, sista::Coordinates> directionMap;
 extern std::unordered_map<Direction, char> directionSymbol;
 extern std::mt19937 rng;
+extern std::map<int, std::vector<int>> passages; // {y, {x1, x2, x3...}}
 
 void generateTunnels();
 void printSideInstructions(int);
@@ -153,4 +155,18 @@ public:
 
     void trigger();
     void explode();
+};
+
+class Archer : public Entity {
+    static ANSI::Settings archerStyle;
+    static std::vector<Archer*> archers;
+    static std::uniform_int_distribution<int> shooting;
+
+    Archer();
+    Archer(sista::Coordinates);
+    void remove() override;
+
+    void move();
+    bool move(Direction);
+    void shoot();
 };

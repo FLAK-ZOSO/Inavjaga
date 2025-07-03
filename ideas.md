@@ -1,4 +1,6 @@
 - rocks should take damage randomly on the long term
+- the field goes wearing out with time passing
 - when you kill a worm with an headshot, the rest of the body becomes bullets that you can harvest
 - the worms leave clay around
-- the field goes wearing out with time passing
+- you need to eat meat not to starve
+- archers move through the wall breaches, while worms follow the path

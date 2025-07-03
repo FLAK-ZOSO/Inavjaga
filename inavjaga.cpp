@@ -5,7 +5,6 @@
 #include <chrono>
 #include <mutex>
 
-
 Player* Player::player;
 std::vector<Wall*> Wall::walls;
 std::vector<Bullet*> Bullet::bullets;
@@ -13,6 +12,7 @@ std::vector<EnemyBullet*> EnemyBullet::enemyBullets;
 std::vector<Chest*> Chest::chests;
 std::vector<Portal*> Portal::portals;
 std::vector<Mine*> Mine::mines;
+std::vector<Archer*> Archer::archers;
 
 sista::SwappableField* field;
 sista::Cursor cursor;
@@ -60,29 +60,30 @@ int main(int argc, char* argv[]) {
             (int)(FRAME_DURATION / (std::pow(1 + (int)speedup, 2)))
         )); // If there is speedup, the waiting time is reduced by a factor of 4
         std::lock_guard<std::mutex> lock(streamMutex); // Lock stays until scope ends
-        for (unsigned j = 0; j < Bullet::bullets.size(); j++) {
-            Bullet* bullet = Bullet::bullets[j];
-            if (bullet == nullptr) continue;
-            if (bullet->collided) continue;
-            bullet->move();
-        }
-        for (Bullet* bullet : Bullet::bullets) {
-            if (bullet->collided) {
-                bullet->remove();
+        for (int k = 0; k < BULLET_SPEED; k++) {
+            for (unsigned j = 0; j < Bullet::bullets.size(); j++) {
+                Bullet* bullet = Bullet::bullets[j];
+                if (bullet == nullptr) continue;
+                if (bullet->collided) continue;
+                bullet->move();
+            }
+            for (Bullet* bullet : Bullet::bullets) {
+                if (bullet->collided) {
+                    bullet->remove();
+                }
+            }
+            for (unsigned j = 0; j < EnemyBullet::enemyBullets.size(); j++) {
+                EnemyBullet* bullet = EnemyBullet::enemyBullets[j];
+                if (bullet == nullptr) continue;
+                if (bullet->collided) continue;
+                bullet->move();
+            }
+            for (EnemyBullet* bullet : EnemyBullet::enemyBullets) {
+                if (bullet->collided) {
+                    bullet->remove();
+                }
             }
         }
-        for (unsigned j = 0; j < EnemyBullet::enemyBullets.size(); j++) {
-            EnemyBullet* bullet = EnemyBullet::enemyBullets[j];
-            if (bullet == nullptr) continue;
-            if (bullet->collided) continue;
-            bullet->move();
-        }
-        for (EnemyBullet* bullet : EnemyBullet::enemyBullets) {
-            if (bullet->collided) {
-                bullet->remove();
-            }
-        }
-        std::queue<int> exploded;
         for (unsigned j = 0; j < Mine::mines.size(); j++) {
             if (j >= Mine::mines.size()) break;
             Mine* mine = Mine::mines[j];
@@ -202,8 +203,14 @@ void generateTunnels() {
                     && (row / TUNNEL_UNIT / 3) % 2 == 0) {
                     // On "even" horizontal tunnels we leave tunnel space on the left
                     column = TUNNEL_UNIT * 2;
+                    if (row % (TUNNEL_UNIT * 3) == TUNNEL_UNIT * 2 + 1) {
+                        passages[row] = {TUNNEL_UNIT};
+                    } // One of the breaches in the wall is always the built-in one
                 } else if (column >= WIDTH-(TUNNEL_UNIT * 2)
                             && (row / TUNNEL_UNIT / 3) % 2 == 1) {
+                    if (row % (TUNNEL_UNIT * 3) == TUNNEL_UNIT * 2 + 1) {
+                        passages[row] = {WIDTH-TUNNEL_UNIT};
+                    } // One of the breaches in the wall is always the built-in one
                     break; // On "odd" horizontal tunnels we leave tunnel space on the right
                 }
                 if (field->isFree((unsigned short)row, (unsigned short)column)) {
@@ -398,9 +405,9 @@ ANSI::Settings Bullet::bulletStyle = {
     ANSI::Attribute::BRIGHT
 };
 
-EnemyBullet::EnemyBullet() : Entity('>', {0, 0}, enemyBulletStyle, Type::BULLET), direction(Direction::RIGHT), collided(false) {}
+EnemyBullet::EnemyBullet() : Entity('>', {0, 0}, enemyBulletStyle, Type::ENEMY_BULLET), direction(Direction::RIGHT), collided(false) {}
 EnemyBullet::EnemyBullet(sista::Coordinates coordinates, Direction direction) :
-    Entity(directionSymbol[direction], coordinates, enemyBulletStyle, Type::BULLET), direction(direction), collided(false) {
+    Entity(directionSymbol[direction], coordinates, enemyBulletStyle, Type::ENEMY_BULLET), direction(direction), collided(false) {
     EnemyBullet::enemyBullets.push_back(this);
 }
 void EnemyBullet::remove() {
@@ -534,6 +541,24 @@ ANSI::Settings Mine::triggeredMineStyle = {
     ANSI::Attribute::BLINK
 };
 
+Archer::Archer() : Entity('A', {0, 0}, archerStyle, Type::ARCHER) {}
+Archer::Archer(sista::Coordinates coordinates) : Entity('A', coordinates, archerStyle, Type::ARCHER) {
+    Archer::archers.push_back(this);
+}
+void Archer::move() {
+
+}
+void Archer::remove() {
+    Archer::archers.erase(std::find(Archer::archers.begin(), Archer::archers.end(), this));
+    field->erasePawn(this);
+    delete this;
+}
+ANSI::Settings Archer::archerStyle = {
+    ANSI::ForegroundColor::F_CYAN,
+    ANSI::BackgroundColor::B_BLACK,
+    ANSI::Attribute::STRIKETHROUGH
+};
+
 Player::Player(sista::Coordinates coordinates) : Entity('$', coordinates, playerStyle, Type::PLAYER), mode(Player::Mode::COLLECT), inventory(INITIAL_INVENTORY) {}
 Player::Player() : Entity('$', {0, 0}, playerStyle, Type::PLAYER), mode(Player::Mode::COLLECT), inventory(INITIAL_INVENTORY) {}
 void Player::remove() {
@@ -626,6 +651,7 @@ std::unordered_map<Direction, char> directionSymbol = {
     {Direction::LEFT, '<'}
 };
 std::mt19937 rng(std::chrono::system_clock::now().time_since_epoch().count());
+std::map<int, std::vector<int>> passages;
 
 void Inventory::operator+=(const Inventory& other) {
     clay += other.clay;
