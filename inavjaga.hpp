@@ -38,6 +38,9 @@ struct Inventory {
     short meat;
 
     void operator+=(const Inventory&);
+    void operator-=(const Inventory&);
+
+    inline bool containsAtLeast(const Inventory) const;
 }; // The idea is that the inventory can be dropped (as CHEST) and picked up by the player
 
 
@@ -118,4 +121,19 @@ public:
     Portal(sista::Coordinates);
     Portal(sista::Coordinates, Portal*);
     void remove() override;
+};
+
+class Mine : public Entity {
+public:
+    static ANSI::Settings mineStyle;
+    static ANSI::Settings triggeredMineStyle;
+    static std::vector<Mine*> mines;
+    bool triggered;
+
+    Mine();
+    Mine(sista::Coordinates);
+    void remove() override;
+
+    void trigger();
+    void explode();
 };

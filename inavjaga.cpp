@@ -12,13 +12,14 @@ std::vector<Wall*> Wall::walls;
 std::vector<Bullet*> Bullet::bullets;
 std::vector<Chest*> Chest::chests;
 std::vector<Portal*> Portal::portals;
+std::vector<Mine*> Mine::mines;
 
 sista::SwappableField* field;
 sista::Cursor cursor;
 sista::Border border(
     '@', {
-        RGB_GAME_BACKGROUND,
-        ANSI::RGBColor(100, 100, 100),
+        RGB_ROCKS_FOREGROUND,
+        RGB_ROCKS_BACKGROUND,
         ANSI::Attribute::BRIGHT
     }
 );
@@ -293,6 +294,9 @@ void deallocateAll() {
     for (auto portal : Portal::portals) {
         delete portal;
     }
+    for (auto mine : Mine::mines) {
+        delete mine;
+    }
 }
 
 // Entity::Entity() : sista::Pawn(' ', sista::Coordinates(0, 0), Player::playerStyle), type(Type::PLAYER) {}
@@ -316,8 +320,8 @@ void Wall::getHit() {
     }
 }
 ANSI::Settings Wall::wallStyle = {
-    RGB_GAME_BACKGROUND,
-    ANSI::RGBColor(100, 100, 100),
+    RGB_ROCKS_FOREGROUND,
+    RGB_ROCKS_BACKGROUND,
     ANSI::Attribute::BRIGHT
 };
 
@@ -369,8 +373,8 @@ ANSI::Settings Chest::chestStyle = {
     ANSI::Attribute::REVERSE
 };
 
-Portal::Portal() : Entity('#', {0, 0}, portalStyle, Type::PORTAL) {}
-Portal::Portal(sista::Coordinates coordinates) : Entity('#', coordinates, portalStyle, Type::PORTAL) {
+Portal::Portal() : Entity('&', {0, 0}, portalStyle, Type::PORTAL) {}
+Portal::Portal(sista::Coordinates coordinates) : Entity('&', coordinates, portalStyle, Type::PORTAL) {
     Portal::portals.push_back(this);
 }
 void Portal::remove() {
@@ -379,9 +383,29 @@ void Portal::remove() {
     delete this;
 }
 ANSI::Settings Portal::portalStyle = {
-    ANSI::RGBColor(100, 0, 0xff),
-    RGB_GAME_BACKGROUND,
-    ANSI::Attribute::STRIKETHROUGH
+    RGB_ROCKS_FOREGROUND,
+    RGB_ROCKS_BACKGROUND,
+    ANSI::Attribute::FAINT
+};
+
+Mine::Mine() : Entity('*', {0, 0}, mineStyle, Type::MINE), triggered(false) {}
+Mine::Mine(sista::Coordinates coordinates) : Entity('*', coordinates, mineStyle, Type::MINE), triggered(false) {
+    Mine::mines.push_back(this);
+}
+void Mine::remove() {
+    Mine::mines.erase(std::find(Mine::mines.begin(), Mine::mines.end(), this));
+    field->erasePawn(this);
+    delete this;
+}
+ANSI::Settings Mine::mineStyle = {
+    ANSI::RGBColor(200, 100, 200),
+    RGB_ROCKS_FOREGROUND,
+    ANSI::Attribute::BRIGHT
+};
+ANSI::Settings Mine::triggeredMineStyle = {
+    ANSI::RGBColor(200, 100, 200),
+    ANSI::RGBColor(0xff, 0, 0),
+    ANSI::Attribute::BRIGHT
 };
 
 Player::Player(sista::Coordinates coordinates) : Entity('$', coordinates, playerStyle, Type::PLAYER), mode(Player::Mode::COLLECT), inventory(INITIAL_INVENTORY) {}
@@ -433,19 +457,25 @@ void Player::shoot(Direction direction) {
         }
         return;
     }
-
+    
     switch (this->mode) {
         // TODO: add modes
         case Mode::BULLET:
-            if (--inventory.bullets >= 0) {
-                field->addPrintPawn(new Bullet(target, direction));
-            }
-            inventory.bullets = std::max(inventory.bullets, (short)0);
-            break;
+        if (--inventory.bullets >= 0) {
+            field->addPrintPawn(new Bullet(target, direction));
+        }
+        inventory.bullets = std::max(inventory.bullets, (short)0);
+        break;
         case Mode::DUMPCHEST:
             // There is a check missing here... on purpose ;)
             field->addPrintPawn(new Chest(target, this->inventory));
             this->inventory = {0, 0, 0};
+            break;
+        case Mode::MINE:
+            if (this->inventory.containsAtLeast(COST_OF_MINE)) {
+                this->inventory -= COST_OF_MINE;
+                field->addPrintPawn(new Mine(target));
+            }
             break;
         default:
             return;
@@ -475,4 +505,12 @@ void Inventory::operator+=(const Inventory& other) {
     clay += other.clay;
     bullets += other.bullets;
     meat += other.meat;
+}
+void Inventory::operator-=(const Inventory& other) {
+    clay -= std::max(other.clay, (short)0);
+    bullets -= std::max(other.bullets, (short)0);
+    meat -= std::max(other.meat, (short)0);
+}
+inline bool Inventory::containsAtLeast(const Inventory other) const {
+    return clay >= other.clay && bullets >= other.bullets && meat >= other.meat;
 }
