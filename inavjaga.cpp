@@ -1,5 +1,4 @@
 #include "cross_platform.hpp"
-#include "constants.hpp"
 #include "inavjaga.hpp"
 #include <algorithm>
 #include <thread>
@@ -69,6 +68,16 @@ int main(int argc, char* argv[]) {
         for (Bullet* bullet : Bullet::bullets) {
             if (bullet->collided) {
                 bullet->remove();
+            }
+        }
+        std::queue<int> exploded;
+        for (unsigned j = 0; j < Mine::mines.size(); j++) {
+            if (j >= Mine::mines.size()) break;
+            Mine* mine = Mine::mines[j];
+            if (mine->triggered) {
+                if (Mine::explosionDistribution(rng)) {
+                    mine->explode();
+                }
             }
         }
         printSideInstructions(i);
@@ -314,10 +323,12 @@ void Wall::remove() {
     field->erasePawn(this);
     delete this;
 }
-void Wall::getHit() {
+bool Wall::getHit() {
     if (--strength <= 0) {
         this->remove();
+        return true;
     }
+    return false;
 }
 ANSI::Settings Wall::wallStyle = {
     RGB_ROCKS_FOREGROUND,
@@ -347,6 +358,11 @@ void Bullet::move() {
         switch (entityType) {
             case Type::WALL:
                 ((Wall*)entity)->getHit();
+                break;
+            case Type::MINE:
+                ((Mine*)entity)->trigger();
+                break;
+            default:
                 break;
         }
         this->remove(); // Hit something and the situation was not handled
@@ -397,15 +413,51 @@ void Mine::remove() {
     field->erasePawn(this);
     delete this;
 }
+void Mine::trigger() {
+    if (this->triggered) return;
+    this->triggered = true;
+    this->setSettings(Mine::triggeredMineStyle);
+    this->setSymbol('%');
+    field->rePrintPawn(this);
+}
+void Mine::explode() {
+    for (int j=-2; j<=2; j++) {
+        for (int i=-2; i<=2; i++) {
+            if (i == 0 && j == 0) continue;
+            sista::Coordinates target = this->coordinates + (sista::Coordinates){j, i};
+            if (field->isOutOfBounds(target)) continue;
+            if (field->isOccupied(target)) {
+                Entity* entity = (Entity*)field->getPawn(target);
+                switch (entity->type) {
+                    case Type::MINE:
+                        ((Mine*)entity)->trigger();
+                        break;
+                    case Type::WALL: {
+                        int damage = mineDamage(rng);
+                        while (!((Wall*)entity)->getHit() && --damage);
+                        break;
+                    }
+                    case Type::PLAYER: case Type::PORTAL:
+                        break; // Player and Portals get no damage from mines
+                    default:
+                        entity->remove();
+                }
+            }
+        }
+    }
+    this->remove();
+}
+std::bernoulli_distribution Mine::explosionDistribution(MINE_EXPLOSION_IN_FRAME_PROBABILITY);
+std::uniform_int_distribution<int> Mine::mineDamage(MINE_MINIMUM_DAMAGE, MINE_MAXIMUM_DAMAGE);
 ANSI::Settings Mine::mineStyle = {
     ANSI::RGBColor(200, 100, 200),
     RGB_ROCKS_FOREGROUND,
     ANSI::Attribute::BRIGHT
 };
 ANSI::Settings Mine::triggeredMineStyle = {
-    ANSI::RGBColor(200, 100, 200),
+    RGB_BLACK,
     ANSI::RGBColor(0xff, 0, 0),
-    ANSI::Attribute::BRIGHT
+    ANSI::Attribute::RAPID_BLINK
 };
 
 Player::Player(sista::Coordinates coordinates) : Entity('$', coordinates, playerStyle, Type::PLAYER), mode(Player::Mode::COLLECT), inventory(INITIAL_INVENTORY) {}

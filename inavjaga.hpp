@@ -1,4 +1,5 @@
 #include "include/sista/sista.hpp"
+#include "constants.hpp"
 #include <unordered_map>
 #include <vector>
 #include <random>
@@ -83,7 +84,7 @@ public:
     Wall(sista::Coordinates, short int);
     void remove() override;
 
-    void getHit();
+    bool getHit();
 };
 
 class Bullet : public Entity {
@@ -128,6 +129,8 @@ public:
     static ANSI::Settings mineStyle;
     static ANSI::Settings triggeredMineStyle;
     static std::vector<Mine*> mines;
+    static std::bernoulli_distribution explosionDistribution;
+    static std::uniform_int_distribution<int> mineDamage;
     bool triggered;
 
     Mine();
