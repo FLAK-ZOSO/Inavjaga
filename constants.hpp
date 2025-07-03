@@ -4,7 +4,7 @@
 // Field size and shape
 #define WIDTH 100
 #define HEIGHT 30
-#define TUNNEL_UNIT 2
+#define TUNNEL_UNIT 3
 
 // Game speed
 #define FRAME_DURATION 100

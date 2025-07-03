@@ -166,8 +166,6 @@ void generateTunnels() {
     for (int row=0; row<HEIGHT; row++) {
         if (row % (TUNNEL_UNIT * 3) == 0 && row + TUNNEL_UNIT * 3 < HEIGHT) {
             portalCoordinate = distr(rng);
-            std::cerr << "Building portals in {" << row + TUNNEL_UNIT * 2 << ", " << portalCoordinate << "}";
-            std::cerr << " and in {" << row + TUNNEL_UNIT * 3 - 1 << ", " << portalCoordinate << "}" << std::endl;
             Portal* abovePortal = new Portal({row + TUNNEL_UNIT * 2, portalCoordinate});
             Portal* belowPortal = new Portal({row + TUNNEL_UNIT * 3 - 1, portalCoordinate});
             abovePortal->exit = belowPortal;
@@ -400,8 +398,17 @@ void Player::move(Direction direction) {
         return;
     } else if (field->isOccupied(next)) {
         Entity* entity = (Entity*)field->getPawn(next);
-        if (entity->type == Type::WALL) {
-            return;
+        switch (entity->type) {
+            case Type::PORTAL: {
+                Portal* portal = (Portal*)entity;
+                sista::Coordinates landing = portal->exit->getCoordinates() + directionMap[direction];
+                if (field->isFree(landing)) {
+                    field->movePawn(this, landing);
+                }
+                break;
+            }
+            default:
+                break;
         }
     }
 }
