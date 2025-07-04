@@ -203,13 +203,24 @@ void generateTunnels() {
                     && (row / TUNNEL_UNIT / 3) % 2 == 0) {
                     // On "even" horizontal tunnels we leave tunnel space on the left
                     column = TUNNEL_UNIT * 2;
-                    if (row % (TUNNEL_UNIT * 3) == TUNNEL_UNIT * 2 + 1) {
-                        passages[row] = {TUNNEL_UNIT};
+                    if (row % (TUNNEL_UNIT * 3) == TUNNEL_UNIT * 3 - 1) {
+                        passages[row] = std::vector<int>(TUNNEL_UNIT * 2);
+                        std::iota(
+                            passages[row].begin(),
+                            passages[row].end(), 0
+                        );
+                        breaches[row] = {};
                     } // One of the breaches in the wall is always the built-in one
                 } else if (column >= WIDTH-(TUNNEL_UNIT * 2)
                             && (row / TUNNEL_UNIT / 3) % 2 == 1) {
-                    if (row % (TUNNEL_UNIT * 3) == TUNNEL_UNIT * 2 + 1) {
-                        passages[row] = {WIDTH-TUNNEL_UNIT};
+                    if (row % (TUNNEL_UNIT * 3) == TUNNEL_UNIT * 3 - 1) {
+                        passages[row] = std::vector<int>(TUNNEL_UNIT * 2);
+                        std::iota(
+                            passages[row].begin(),
+                            passages[row].end(),
+                            WIDTH - (TUNNEL_UNIT * 2)
+                        );
+                        breaches[row] = {};
                     } // One of the breaches in the wall is always the built-in one
                     break; // On "odd" horizontal tunnels we leave tunnel space on the right
                 }
@@ -324,6 +335,9 @@ void deallocateAll() {
     }
     for (auto mine : Mine::mines) {
         delete mine;
+    }
+    for (auto bullet : EnemyBullet::enemyBullets) {
+        delete bullet;
     }
 }
 
@@ -651,7 +665,9 @@ std::unordered_map<Direction, char> directionSymbol = {
     {Direction::LEFT, '<'}
 };
 std::mt19937 rng(std::chrono::system_clock::now().time_since_epoch().count());
-std::map<int, std::vector<int>> passages;
+std::map<int, std::vector<int>> passages; // Lateral passages, "main tunnel" tresholds
+std::map<int, std::vector<int>> breaches; // Central breaches, "holes"
+std::bernoulli_distribution dumbMoveDistribution(DUMB_MOVE_PROBABILITY);
 
 void Inventory::operator+=(const Inventory& other) {
     clay += other.clay;

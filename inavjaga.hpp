@@ -27,6 +27,8 @@ extern std::unordered_map<Direction, sista::Coordinates> directionMap;
 extern std::unordered_map<Direction, char> directionSymbol;
 extern std::mt19937 rng;
 extern std::map<int, std::vector<int>> passages; // {y, {x1, x2, x3...}}
+extern std::map<int, std::vector<int>> breaches; // {y, {x1, x2, x3...}}
+extern std::bernoulli_distribution dumbMoveDistribution;
 
 void generateTunnels();
 void printSideInstructions(int);
