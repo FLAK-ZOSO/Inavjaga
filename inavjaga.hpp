@@ -31,6 +31,7 @@ extern std::map<int, std::vector<int>> breaches; // {y, {x1, x2, x3...}}
 extern std::bernoulli_distribution dumbMoveDistribution;
 
 void generateTunnels();
+void spawnEnemies();
 void printSideInstructions(int);
 void input();
 void act(char);
@@ -147,7 +148,7 @@ public:
     static ANSI::Settings mineStyle;
     static ANSI::Settings triggeredMineStyle;
     static std::vector<Mine*> mines;
-    static std::bernoulli_distribution explosionDistribution;
+    static std::bernoulli_distribution explosion;
     static std::uniform_int_distribution<int> mineDamage;
     bool triggered;
 
@@ -160,9 +161,11 @@ public:
 };
 
 class Archer : public Entity {
+public:
     static ANSI::Settings archerStyle;
     static std::vector<Archer*> archers;
-    static std::uniform_int_distribution<int> shooting;
+    static std::bernoulli_distribution shooting;
+    static std::bernoulli_distribution moving;
 
     Archer();
     Archer(sista::Coordinates);

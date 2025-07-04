@@ -4,6 +4,7 @@
 #include <thread>
 #include <chrono>
 #include <mutex>
+#include <set>
 
 Player* Player::player;
 std::vector<Wall*> Wall::walls;
@@ -49,6 +50,7 @@ int main(int argc, char* argv[]) {
     Player::player = new Player({0, 0});
     Player::player->mode = Player::Mode::BULLET;
     field->addPawn(Player::player);
+    spawnEnemies();
     field->print(border);
     std::thread th(input);
     for (int i=0; !end; i++) {
@@ -88,9 +90,14 @@ int main(int argc, char* argv[]) {
             if (j >= Mine::mines.size()) break;
             Mine* mine = Mine::mines[j];
             if (mine->triggered) {
-                if (Mine::explosionDistribution(rng)) {
+                if (Mine::explosion(rng)) {
                     mine->explode();
                 }
+            }
+        }
+        for (auto archer : Archer::archers) {
+            if (Archer::moving(rng)) {
+                archer->move();
             }
         }
         printSideInstructions(i);
@@ -232,6 +239,22 @@ void generateTunnels() {
     }
 }
 
+void spawnEnemies() {
+    std::deque<sista::Coordinates> freeBaseCoordinates;
+    for (int column = 0; column < WIDTH; column++) {
+        sista::Coordinates coords = {HEIGHT - 1, column};
+        if (field->isFree(coords)) {
+            freeBaseCoordinates.push_back({HEIGHT - 1, column});
+        }
+    }
+    std::shuffle(freeBaseCoordinates.begin(), freeBaseCoordinates.end(), rng);
+
+    for (int i = 0; i < INITIAL_ARCHERS; i++) {
+        field->addPawn(new Archer(freeBaseCoordinates.front()));
+        freeBaseCoordinates.pop_front();
+    }
+}
+
 void input() {
     char input_ = '_';
     while (input_ != 'Q' /*&& input_ != 'q'*/) {
@@ -338,6 +361,9 @@ void deallocateAll() {
     }
     for (auto bullet : EnemyBullet::enemyBullets) {
         delete bullet;
+    }
+    for (auto archer : Archer::archers) {
+        delete archer;
     }
 }
 
@@ -542,7 +568,7 @@ void Mine::explode() {
     }
     this->remove();
 }
-std::bernoulli_distribution Mine::explosionDistribution(MINE_EXPLOSION_IN_FRAME_PROBABILITY);
+std::bernoulli_distribution Mine::explosion(MINE_EXPLOSION_IN_FRAME_PROBABILITY);
 std::uniform_int_distribution<int> Mine::mineDamage(MINE_MINIMUM_DAMAGE, MINE_MAXIMUM_DAMAGE);
 ANSI::Settings Mine::mineStyle = {
     ANSI::RGBColor(200, 100, 200),
@@ -560,13 +586,126 @@ Archer::Archer(sista::Coordinates coordinates) : Entity('A', coordinates, archer
     Archer::archers.push_back(this);
 }
 void Archer::move() {
+    // There is always a probability of a dumb move
+    if (dumbMoveDistribution(rng)) {
+        Direction direction = (Direction)(rand() % 4);
+        this->move(direction);
+        return;
+    }
 
+    auto [row, column] = coordinates;
+    sista::Coordinates above = coordinates + directionMap[Direction::UP];
+    // It could be right below a passage or breach
+    if (row % (TUNNEL_UNIT * 3) == 0) {
+        if (std::find(breaches[above.y].begin(), breaches[above.y].end(), column) != breaches[above.y].end()) {
+            // There is a breach right above, so try to step in
+            this->move(Direction::UP);
+            return;
+        } else if (std::find(passages[above.y].begin(), passages[above.y].end(), column) != passages[above.y].end()) {
+            // There is a passage, so try to ascend
+            this->move(Direction::UP);
+            return;
+        }
+    }
+    // It is in a passage or breach (in the proper range on y axis)
+    if (row % (TUNNEL_UNIT * 3) >= TUNNEL_UNIT * 2) {
+        // it uses BFS to pick the next move to get to the other side
+        std::queue<std::pair<sista::Coordinates, Direction>> bfs({
+            {coordinates + directionMap[Direction::UP], Direction::UP},
+            {coordinates + directionMap[Direction::LEFT], Direction::LEFT},
+            {coordinates + directionMap[Direction::DOWN], Direction::DOWN},
+            {coordinates + directionMap[Direction::RIGHT], Direction::RIGHT}
+        }); // {coordinate, first direction taken in the path}
+        std::set<sista::Coordinates> visited;
+        visited.insert({coordinates});
+        Direction chosenMove;
+        bool found = false;
+        while (!bfs.empty()) {
+            auto [coords, choice] = bfs.front();
+            bfs.pop();
+
+            if (field->isOutOfBounds(coords)) continue; // Exiting the field
+            if (std::find(visited.begin(), visited.end(), coords) != visited.end()) continue; // Already visited
+            if (field->isOccupied(coords)) { // Cell is not free
+                Type type = ((Entity*)field->getPawn(coords))->type;
+                if (type == Type::WALL || type == Type::PORTAL) continue;
+            }
+            if (coords.y % (TUNNEL_UNIT * 3) == 0) continue; // Exiting the breach
+            if (coords.y % (TUNNEL_UNIT * 3) < TUNNEL_UNIT * 2) { // Exiting the breach on the upper side
+                chosenMove = choice;
+                found = true;
+                break;
+            }
+            visited.insert(coords);
+
+            bfs.push({coords + directionMap[Direction::UP], choice});
+            bfs.push({coords + directionMap[Direction::LEFT], choice});
+            bfs.push({coords + directionMap[Direction::DOWN], choice});
+            bfs.push({coords + directionMap[Direction::RIGHT], choice});
+        }
+        if (found) {
+            this->move(chosenMove);
+            return;
+        } else {
+            Direction direction = (Direction)(rand() % 4);
+            this->move(direction);
+            return;
+        }
+    }
+    // It roughly (probabilistically by x/y ratio) points to the centermost (or a random-but-deterministic one) breach
+    int next_passage_y = (row - (row % (TUNNEL_UNIT * 3))) - 1;
+    int next_passage_x;
+    if (!breaches[next_passage_y].empty()) {
+        std::vector<int> centermost_breaches = breaches[next_passage_y];
+        if (!centermost_breaches.empty()) {
+            std::sort(centermost_breaches.begin(), centermost_breaches.end(), [](int a, int b) {
+                return std::abs(a - WIDTH/2) < std::abs(b - WIDTH/2);
+            });
+            next_passage_x = centermost_breaches[(reinterpret_cast<intptr_t>(this)) % centermost_breaches.size()];
+        }
+    } else {
+        // If no breaches are found, then it points to any passage of the following level (random and not necessarily deterministic)
+        std::vector<int> available_passages = passages[next_passage_y];
+        next_passage_x = available_passages[rand() % available_passages.size()];
+    }
+    int delta_y = next_passage_y - row;
+    int delta_x = next_passage_x - column;
+    std::cerr << delta_y << " " << delta_x << std::endl;
+    float ratio = (std::min(std::abs(delta_y), std::abs(delta_x)) + 1)
+                / (std::max(std::abs(delta_y), std::abs(delta_x)) + 1);
+    std::bernoulli_distribution verticalNotHorizontalDistribution(ratio);
+    if (verticalNotHorizontalDistribution(rng)) {
+        this->move(Direction::UP);
+    } else {
+        if (delta_x >= 0) {
+            this->move(Direction::RIGHT);
+        } else {
+            this->move(Direction::LEFT);
+        }
+    }
+}
+bool Archer::move(Direction direction) {
+    sista::Coordinates next = this->coordinates + directionMap[direction];
+    if (field->isOutOfBounds(next)) {
+        return false;
+    } else if (field->isFree(next)) {
+        field->movePawn(this, next);
+    } else if (field->isOccupied(next)) {
+        Entity* entity = (Entity*)field->getPawn(next);
+        switch (entity->type) {
+            case Type::MINE:
+                ((Mine*)entity)->trigger();
+            default:
+                return false;
+        }
+    }
 }
 void Archer::remove() {
     Archer::archers.erase(std::find(Archer::archers.begin(), Archer::archers.end(), this));
     field->erasePawn(this);
     delete this;
 }
+std::bernoulli_distribution Archer::moving(ARCHER_MOVING_PROBABILITY);
 ANSI::Settings Archer::archerStyle = {
     ANSI::ForegroundColor::F_CYAN,
     ANSI::BackgroundColor::B_BLACK,

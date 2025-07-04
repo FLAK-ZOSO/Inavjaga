@@ -26,4 +26,11 @@
 // Damage
 #define MINE_MINIMUM_DAMAGE 1
 #define MINE_MAXIMUM_DAMAGE 3
+
+// Probabilistic settings
 #define MINE_EXPLOSION_IN_FRAME_PROBABILITY 0.10
+#define DUMB_MOVE_PROBABILITY 0.25
+#define ARCHER_MOVING_PROBABILITY 0.33
+
+// Spawn settings
+#define INITIAL_ARCHERS 6
