@@ -4,3 +4,4 @@
 - the worms leave clay around
 - you need to eat meat not to starve
 - archers move through the wall breaches, while worms follow the path
+- mines get triggered by an archer stepping on it, but for a worm it's sufficient for the head to pass nearby

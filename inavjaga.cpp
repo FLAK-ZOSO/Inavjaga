@@ -670,7 +670,6 @@ void Archer::move() {
     }
     int delta_y = next_passage_y - row;
     int delta_x = next_passage_x - column;
-    std::cerr << delta_y << " " << delta_x << std::endl;
     float ratio = (std::min(std::abs(delta_y), std::abs(delta_x)) + 1)
                 / (std::max(std::abs(delta_y), std::abs(delta_x)) + 1);
     std::bernoulli_distribution verticalNotHorizontalDistribution(ratio);
