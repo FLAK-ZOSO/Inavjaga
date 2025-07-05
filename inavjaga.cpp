@@ -67,8 +67,9 @@ int main(int argc, char* argv[]) {
         std::this_thread::sleep_for(std::chrono::milliseconds(
             (int)(FRAME_DURATION / (std::pow(1 + (int)speedup, 2)))
         )); // If there is speedup, the waiting time is reduced by a factor of 4
-        std::lock_guard<std::mutex> lock(streamMutex); // Lock stays until scope ends
         auto start = std::chrono::high_resolution_clock::now();
+        std::lock_guard<std::mutex> lock(streamMutex); // Lock stays until scope ends
+        std::cerr << "Before bullets" << std::endl;
         for (int k = 0; k < BULLET_SPEED; k++) {
             for (unsigned j = 0; j < Bullet::bullets.size(); j++) {
                 Bullet* bullet = Bullet::bullets[j];
@@ -93,6 +94,7 @@ int main(int argc, char* argv[]) {
                 }
             }
         }
+        std::cerr << "Before mines" << std::endl;
         for (unsigned j = 0; j < Mine::mines.size(); j++) {
             if (j >= Mine::mines.size()) break;
             Mine* mine = Mine::mines[j];
@@ -102,6 +104,7 @@ int main(int argc, char* argv[]) {
                 }
             }
         }
+        std::cerr << "Before archers" << std::endl;
         for (auto archer : Archer::archers) {
             if (Archer::moving(rng)) {
                 archer->move();
@@ -110,17 +113,22 @@ int main(int argc, char* argv[]) {
                 archer->shoot();
             }
         }
-        if (Wall::wearing(rng)) {
+        std::cerr << "Before walls" << std::endl;
+        if (!Wall::walls.empty() && Wall::wearing(rng)) {
             for (int j = 0; j < DAMAGED_WALLS_COUNT; j++) {
+                if (Wall::walls.empty()) break;
                 int index = std::uniform_int_distribution<int>(0, Wall::walls.size() - 1)(rng);
+                std::cerr << "Damaging wall " << index << std::flush;
+                std::cerr << " at {" << Wall::walls[index]->getCoordinates().y << ", " << Wall::walls[index]->getCoordinates().x << "}" << std::flush;
+                std::cerr << " with " << Wall::walls[index]->strength << "hp" << std::endl;
                 Wall::walls[index]->getHit();
             }
         }
+        printSideInstructions(i);
+        std::flush(std::cout);
         auto stop = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> delta = stop - start;
         std::cerr << "Frame number " << i << " took " << delta.count() * 1000 << "ms" << std::endl;
-        printSideInstructions(i);
-        std::flush(std::cout);
     }
 
     end = true;
@@ -417,12 +425,16 @@ bool Wall::getHit() {
         sista::Coordinates coords, breach;
         bool foundBelowExit = false;
         bool foundAboveExit = false;
-        while (!dfs.empty()) {
+        std::cerr << "\tStarting the DFS" << std::endl;
+        while (!dfs.empty() && !foundBelowExit && !foundAboveExit) {
             coords = dfs.top();
+            std::cerr << "\t\tDFS proceeding with {" << coords.y << ", " << coords.x << "}" << std::endl;
             dfs.pop();
 
             if (field->isOutOfBounds(coords)) continue; // Exiting the field
-            if (std::find(visited.begin(), visited.end(), coords) != visited.end()) continue; // Already visited
+            if (visited.count(coords)) continue; // Already visited
+            visited.insert(coords);
+
             if (field->isOccupied(coords)) { // Cell is not free
                 Type type = ((Entity*)field->getPawn(coords))->type;
                 if (type == Type::WALL || type == Type::PORTAL) continue;
@@ -446,13 +458,14 @@ bool Wall::getHit() {
                 continue;
             }
             if (foundBelowExit && foundAboveExit) break;
-            visited.insert(coords);
 
             dfs.push(coords + directionMap[Direction::UP]);
             dfs.push(coords + directionMap[Direction::LEFT]);
             dfs.push(coords + directionMap[Direction::DOWN]);
             dfs.push(coords + directionMap[Direction::RIGHT]);
         }
+        std::cerr << "\tfoundBelowExit=" << foundBelowExit;
+        std::cerr << "\tfoundAboveExit=" << foundAboveExit << std::endl;
         if (foundBelowExit && foundAboveExit) {
             if (breaches.count(breach.y)) {
                 breaches[breach.y].push_back(breach.x);
@@ -460,7 +473,9 @@ bool Wall::getHit() {
                 breaches[breach.y] = {breach.x};
             }
         }
+        std::cerr << "\tBefore removing" << std::endl;
         this->remove();
+        std::cerr << "\tAfter removing" << std::endl;
         return true;
     }
     return false;
