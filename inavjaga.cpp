@@ -60,6 +60,7 @@ int main(int argc, char* argv[]) {
             if (!pause_) {
                 sista::clearScreen(true);
                 field->print(border);
+                printKeys();
             } // Reprint after unpausing, just as a tool for allowing resizing
             if (end) break;
         }
@@ -67,6 +68,7 @@ int main(int argc, char* argv[]) {
             (int)(FRAME_DURATION / (std::pow(1 + (int)speedup, 2)))
         )); // If there is speedup, the waiting time is reduced by a factor of 4
         std::lock_guard<std::mutex> lock(streamMutex); // Lock stays until scope ends
+        auto start = std::chrono::high_resolution_clock::now();
         for (int k = 0; k < BULLET_SPEED; k++) {
             for (unsigned j = 0; j < Bullet::bullets.size(); j++) {
                 Bullet* bullet = Bullet::bullets[j];
@@ -108,6 +110,15 @@ int main(int argc, char* argv[]) {
                 archer->shoot();
             }
         }
+        if (Wall::wearing(rng)) {
+            for (int j = 0; j < DAMAGED_WALLS_COUNT; j++) {
+                int index = std::uniform_int_distribution<int>(0, Wall::walls.size() - 1)(rng);
+                Wall::walls[index]->getHit();
+            }
+        }
+        auto stop = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> delta = stop - start;
+        std::cerr << "Frame number " << i << " took " << delta.count() * 1000 << "ms" << std::endl;
         printSideInstructions(i);
         std::flush(std::cout);
     }
@@ -170,32 +181,33 @@ void printSideInstructions(int i) {
     ANSI::resetAttribute(ANSI::Attribute::BRIGHT);
     cursor.set(11, WIDTH + 10);
 
-    if (i % 100 == 99 || i == 0) {
-        cursor.set(12, WIDTH + 10);
-        ANSI::setAttribute(ANSI::Attribute::BRIGHT);
-        std::cout << "Instructions\n";
-        ANSI::resetAttribute(ANSI::Attribute::BRIGHT);
-        cursor.set(13, WIDTH + 10);
-        std::cout << "Move: \x1b[35mw\x1b[37m | \x1b[35ma\x1b[37m | \x1b[35ms\x1b[37m | \x1b[35md\x1b[37m\n";
-        cursor.set(14, WIDTH+10);
-        std::cout << "Act: \x1b[35mi\x1b[37m | \x1b[35mj\x1b[37m | \x1b[35mk\x1b[37m | \x1b[35ml\x1b[37m\n";
-        cursor.set(16, WIDTH + 10);
-        std::cout << "Collect mode: \x1b[35mc\x1b[37m\n";
-        cursor.set(17, WIDTH + 10);
-        std::cout << "Bullet mode: \x1b[35mb\x1b[37m\n";
-        cursor.set(18, WIDTH + 10);
-        std::cout << "Dump Chest mode: \x1b[35me\x1b[37m\n";
-        cursor.set(19, WIDTH + 10);
-        std::cout << "Place Trap mode: \x1b[35mt\x1b[37m\n";
-        cursor.set(20, WIDTH + 10);
-        std::cout << "Place Mine mode: \x1b[35mm\x1b[37m | \x1b[35m*\x1b[37m\n";
-        cursor.set(22, WIDTH + 10);
-        std::cout << "Speedup mode: \x1b[35m+\x1b[37m | \x1b[35m-\x1b[37m\n";
-        cursor.set(23, WIDTH + 10);
-        std::cout << "Pause or resume: \x1b[35m.\x1b[37m | \x1b[35mp\x1b[37m\n";
-        cursor.set(24, WIDTH + 10);
-        std::cout << "Quit: \x1b[35mQ\x1b[37m\n";
-    }
+    if (i == 0) printKeys();
+}
+void printKeys() {
+    cursor.set(12, WIDTH + 10);
+    ANSI::setAttribute(ANSI::Attribute::BRIGHT);
+    std::cout << "Instructions\n";
+    ANSI::resetAttribute(ANSI::Attribute::BRIGHT);
+    cursor.set(13, WIDTH + 10);
+    std::cout << "Move: \x1b[35mw\x1b[37m | \x1b[35ma\x1b[37m | \x1b[35ms\x1b[37m | \x1b[35md\x1b[37m\n";
+    cursor.set(14, WIDTH+10);
+    std::cout << "Act: \x1b[35mi\x1b[37m | \x1b[35mj\x1b[37m | \x1b[35mk\x1b[37m | \x1b[35ml\x1b[37m\n";
+    cursor.set(16, WIDTH + 10);
+    std::cout << "Collect mode: \x1b[35mc\x1b[37m\n";
+    cursor.set(17, WIDTH + 10);
+    std::cout << "Bullet mode: \x1b[35mb\x1b[37m\n";
+    cursor.set(18, WIDTH + 10);
+    std::cout << "Dump Chest mode: \x1b[35me\x1b[37m\n";
+    cursor.set(19, WIDTH + 10);
+    std::cout << "Place Trap mode: \x1b[35mt\x1b[37m\n";
+    cursor.set(20, WIDTH + 10);
+    std::cout << "Place Mine mode: \x1b[35mm\x1b[37m | \x1b[35m*\x1b[37m\n";
+    cursor.set(22, WIDTH + 10);
+    std::cout << "Speedup mode: \x1b[35m+\x1b[37m | \x1b[35m-\x1b[37m\n";
+    cursor.set(23, WIDTH + 10);
+    std::cout << "Pause or resume: \x1b[35m.\x1b[37m | \x1b[35mp\x1b[37m\n";
+    cursor.set(24, WIDTH + 10);
+    std::cout << "Quit: \x1b[35mQ\x1b[37m\n";
 }
 
 void generateTunnels() {
@@ -241,7 +253,7 @@ void generateTunnels() {
                     break; // On "odd" horizontal tunnels we leave tunnel space on the right
                 }
                 if (field->isFree((unsigned short)row, (unsigned short)column)) {
-                    field->addPawn(new Wall({row, column}, row % (TUNNEL_UNIT * 3)));
+                    field->addPawn(new Wall({row, column}, INITIAL_WALL_STRENGTH - row / TUNNEL_UNIT / 3));
                 }
             }
         }
@@ -453,6 +465,7 @@ bool Wall::getHit() {
     }
     return false;
 }
+std::bernoulli_distribution Wall::wearing(WALL_WEARING_PROBABILITY);
 ANSI::Settings Wall::wallStyle = {
     RGB_ROCKS_FOREGROUND,
     RGB_ROCKS_BACKGROUND,
@@ -786,7 +799,15 @@ void Archer::shoot() {
     if (coordinates.x == Player::player->getCoordinates().x) {
         // Roughly vertically aligned with the player
         if (coordinates.y / (TUNNEL_UNIT * 3) != Player::player->getCoordinates().y / (TUNNEL_UNIT * 3)) {
-            // They was a wall between them (TODO: check if the wall is actually still there) so the archer cannot see
+            // They was a wall between them so the archer cannot see
+            int next_breaches_y = (coordinates.y % (TUNNEL_UNIT * 3)) - 1;
+            if (!breaches[next_breaches_y].empty()) {
+                if (std::find(breaches[next_breaches_y].begin(), breaches[next_breaches_y].end(), coordinates.x) != breaches[next_breaches_y].end()) {
+                    // ...unless there is a breach right above that allows the archer to hear the player moving behind the wall
+                    this->shoot(Direction::UP);
+                    return;
+                }
+            }
             this->shoot((Direction)(rand() % 4));
             return;
         }

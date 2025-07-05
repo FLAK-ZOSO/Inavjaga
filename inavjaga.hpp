@@ -33,6 +33,7 @@ extern std::bernoulli_distribution dumbMoveDistribution;
 void generateTunnels();
 void spawnEnemies();
 void printSideInstructions(int);
+void printKeys();
 void input();
 void act(char);
 void deallocateAll();
@@ -83,6 +84,7 @@ class Wall : public Entity {
 public:
     static ANSI::Settings wallStyle;
     static std::vector<Wall*> walls;
+    static std::bernoulli_distribution wearing;
     short int strength;
 
     Wall();
