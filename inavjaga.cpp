@@ -99,6 +99,9 @@ int main(int argc, char* argv[]) {
             if (Archer::moving(rng)) {
                 archer->move();
             }
+            if (Archer::shooting(rng)) {
+                archer->shoot();
+            }
         }
         printSideInstructions(i);
         std::flush(std::cout);
@@ -433,6 +436,10 @@ void Bullet::move() {
                 bullet->collided = true;
                 break;
             }
+            case Type::ARCHER: {
+                entity->remove();
+                break;
+            }
             default:
                 break;
         }
@@ -483,6 +490,9 @@ void EnemyBullet::move() {
                 bullet->collided = true;
                 break;
             }
+            case Type::PLAYER:
+                end = true;
+                break;
             default:
                 break;
         }
@@ -689,6 +699,7 @@ bool Archer::move(Direction direction) {
         return false;
     } else if (field->isFree(next)) {
         field->movePawn(this, next);
+        return true;
     } else if (field->isOccupied(next)) {
         Entity* entity = (Entity*)field->getPawn(next);
         switch (entity->type) {
@@ -699,12 +710,74 @@ bool Archer::move(Direction direction) {
         }
     }
 }
+void Archer::shoot() {
+    if (dumbMoveDistribution(rng)) {
+        this->shoot((Direction)(rand() % 4));
+        return;
+    }
+    if (coordinates.x == Player::player->getCoordinates().x) {
+        // Roughly vertically aligned with the player
+        if (coordinates.y / (TUNNEL_UNIT * 3) != Player::player->getCoordinates().y / (TUNNEL_UNIT * 3)) {
+            // They was a wall between them (TODO: check if the wall is actually still there) so the archer cannot see
+            this->shoot((Direction)(rand() % 4));
+            return;
+        }
+        if (coordinates.y < Player::player->getCoordinates().y) {
+            this->shoot(Direction::DOWN);
+        } else if (coordinates.y > Player::player->getCoordinates().y) {
+            this->shoot(Direction::UP);
+        }
+        // Exactly vertically aligned with the player
+        if (coordinates.x == Player::player->getCoordinates().x) {
+            this->move(Direction::DOWN); // Dodges incoming bullets
+        }
+    } else if (coordinates.y == Player::player->getCoordinates().y) {
+        // Roughly horizontally aligned with the player
+        if (coordinates.x < Player::player->getCoordinates().x) {
+            this->shoot(Direction::RIGHT);
+        } else if (coordinates.x > Player::player->getCoordinates().x) {
+            this->shoot(Direction::LEFT);
+        }
+        // Exactly horizontally aligned with the player
+        if (coordinates.y == Player::player->getCoordinates().y) {
+            this->move(Direction::LEFT); // Dodges incoming bullets
+        }
+    } else {
+        this->shoot((Direction)(rand() % 4));
+    }
+}
+bool Archer::shoot(Direction direction) {
+    sista::Coordinates target = this->coordinates + directionMap[direction];
+    if (field->isOutOfBounds(target)) {
+        return false;
+    } else if (field->isFree(target)) {
+        field->addPrintPawn(new EnemyBullet(target, direction));
+        return true;
+    } else if (field->isOccupied(target)) {
+        Entity* entity = (Entity*)field->getPawn(target);
+        switch (entity->type) {
+            case Type::WALL:
+                ((Wall*)entity)->getHit();
+                break;
+            case Type::PLAYER: // Counts as a dagger hit
+                end = true;
+                break;
+            case Type::MINE:
+                ((Mine*)entity)->trigger();
+                break;
+            default:
+                break;
+        }
+        return false;
+    }
+}
 void Archer::remove() {
     Archer::archers.erase(std::find(Archer::archers.begin(), Archer::archers.end(), this));
     field->erasePawn(this);
     delete this;
 }
 std::bernoulli_distribution Archer::moving(ARCHER_MOVING_PROBABILITY);
+std::bernoulli_distribution Archer::shooting(ARCHER_SHOOTING_PROBABILITY);
 ANSI::Settings Archer::archerStyle = {
     ANSI::ForegroundColor::F_CYAN,
     ANSI::BackgroundColor::B_BLACK,

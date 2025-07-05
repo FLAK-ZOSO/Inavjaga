@@ -1,5 +1,5 @@
 #define VERSION "0.0.1"
-#define DATE "2025-07-03"
+#define DATE "2025-07-05"
 
 // Field size and shape
 #define WIDTH 100
@@ -31,6 +31,7 @@
 #define MINE_EXPLOSION_IN_FRAME_PROBABILITY 0.10
 #define DUMB_MOVE_PROBABILITY 0.25
 #define ARCHER_MOVING_PROBABILITY 0.33
+#define ARCHER_SHOOTING_PROBABILITY 0.05
 
 // Spawn settings
 #define INITIAL_ARCHERS 6

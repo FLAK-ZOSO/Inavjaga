@@ -174,4 +174,5 @@ public:
     void move();
     bool move(Direction);
     void shoot();
+    bool shoot(Direction);
 };
