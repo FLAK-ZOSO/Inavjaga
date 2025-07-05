@@ -18,7 +18,7 @@ compile-inavjaga:
 inavjaga: compile-inavjaga
 
 link:
-	g++ -std=c++17 -Wall -g -lpthread -o inavjaga inavjaga.o ANSI-Settings.o border.o coordinates.o cursor.o pawn.o field.o
+	g++ -std=c++17 -Wall -g -static -lpthread -o inavjaga inavjaga.o ANSI-Settings.o border.o coordinates.o cursor.o pawn.o field.o
 
 clean:
 	rm -f *.o
