@@ -4,6 +4,7 @@
 #include <thread>
 #include <chrono>
 #include <mutex>
+#include <stack>
 #include <set>
 
 Player* Player::player;
@@ -387,6 +388,51 @@ void Wall::remove() {
 }
 bool Wall::getHit() {
     if (--strength <= 0) {
+        // Verify if this creates a new breach by a DFS
+        std::stack<sista::Coordinates> dfs({
+            coordinates + directionMap[Direction::UP],
+            coordinates + directionMap[Direction::LEFT],
+            coordinates + directionMap[Direction::DOWN],
+            coordinates + directionMap[Direction::RIGHT]
+        });
+        std::set<sista::Coordinates> visited;
+        visited.insert({coordinates});
+        sista::Coordinates coords, breach;
+        bool foundBelowExit = false;
+        bool foundAboveExit = false;
+        while (!dfs.empty()) {
+            coords = dfs.top();
+            dfs.pop();
+
+            if (field->isOutOfBounds(coords)) continue; // Exiting the field
+            if (std::find(visited.begin(), visited.end(), coords) != visited.end()) continue; // Already visited
+            if (field->isOccupied(coords)) { // Cell is not free
+                Type type = ((Entity*)field->getPawn(coords))->type;
+                if (type == Type::WALL || type == Type::PORTAL) continue;
+            }
+            if (coords.y % (TUNNEL_UNIT * 3) == 0) { // Exiting the breach from below
+                foundBelowExit = true;
+                // The breach was right above for how neighbouring is defined in a grid
+                breach = coords + directionMap[Direction::UP];
+            }
+            if (coords.y % (TUNNEL_UNIT * 3) < TUNNEL_UNIT * 2) { // Exiting the breach on the upper side
+                foundAboveExit = true;
+            }
+            if (foundBelowExit && foundAboveExit) break;
+            visited.insert(coords);
+
+            dfs.push(coords + directionMap[Direction::UP]);
+            dfs.push(coords + directionMap[Direction::LEFT]);
+            dfs.push(coords + directionMap[Direction::DOWN]);
+            dfs.push(coords + directionMap[Direction::RIGHT]);
+        }
+        if (foundBelowExit && foundAboveExit) {
+            if (breaches.count(breach.y)) {
+                breaches[breach.y].push_back(breach.x);
+            } else {
+                breaches[breach.y] = {breach.x};
+            }
+        }
         this->remove();
         return true;
     }
