@@ -12,7 +12,7 @@
 
 // Inventory
 #define INITIAL_CLAY 5
-#define INITIAL_BULLETS 100
+#define INITIAL_BULLETS 1000
 #define INITIAL_MEAT 3
 
 // Costs

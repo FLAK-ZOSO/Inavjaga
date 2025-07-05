@@ -57,6 +57,10 @@ int main(int argc, char* argv[]) {
     for (int i=0; !end; i++) {
         while (pause_) {
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            if (!pause_) {
+                sista::clearScreen(true);
+                field->print(border);
+            } // Reprint after unpausing, just as a tool for allowing resizing
             if (end) break;
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(
@@ -224,6 +228,7 @@ void generateTunnels() {
                     } // One of the breaches in the wall is always the built-in one
                 } else if (column >= WIDTH-(TUNNEL_UNIT * 2)
                             && (row / TUNNEL_UNIT / 3) % 2 == 1) {
+                    // On "odd" horizontal tunnels we leave tunnel space on the right
                     if (row % (TUNNEL_UNIT * 3) == TUNNEL_UNIT * 3 - 1) {
                         passages[row] = std::vector<int>(TUNNEL_UNIT * 2);
                         std::iota(
@@ -417,6 +422,16 @@ bool Wall::getHit() {
             }
             if (coords.y % (TUNNEL_UNIT * 3) < TUNNEL_UNIT * 2) { // Exiting the breach on the upper side
                 foundAboveExit = true;
+                continue;
+            }
+            if (coords.x < TUNNEL_UNIT * 2
+                && (coords.y / TUNNEL_UNIT / 3) % 2 == 0) {
+                // On "even" tunnels we should not consider part of the breach the part to the left
+                continue;
+            } else if (coords.x >= WIDTH-(TUNNEL_UNIT * 2)
+                        && (coords.y / TUNNEL_UNIT / 3) % 2 == 1) {
+                // On "odd" tunnels we should not consider part of the breach the part to the right
+                continue;
             }
             if (foundBelowExit && foundAboveExit) break;
             visited.insert(coords);
@@ -722,7 +737,14 @@ void Archer::move() {
     } else {
         // If no breaches are found, then it points to any passage of the following level (random and not necessarily deterministic)
         std::vector<int> available_passages = passages[next_passage_y];
-        next_passage_x = available_passages[rand() % available_passages.size()];
+        if (!available_passages.empty()) {
+            next_passage_x = available_passages[rand() % available_passages.size()];
+        } else {
+            // If there is no passage on the next, it means we're pointing to a negative coordinate
+            // It is dangerous as generating coordinates from that could lead to segmentation faults
+            // but since we only use it to decide the next move it's actually innocuous
+            next_passage_x = WIDTH - 1; // Point to the top right
+        }
     }
     int delta_y = next_passage_y - row;
     int delta_x = next_passage_x - column;
