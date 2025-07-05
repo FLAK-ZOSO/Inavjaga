@@ -10,15 +10,15 @@ all:
 install: all
 
 compile-sista:
-	g++ -std=c++17 -Wall -g -c $(IMPLEMENTATIONS)
+	g++ -std=c++17 -Wpedantic -g -c $(IMPLEMENTATIONS)
 sista: compile-sista
 
 compile-inavjaga:
-	g++ -std=c++17 -Wall -g -c -static inavjaga.cpp -Wno-narrowing
+	g++ -std=c++17 -Wpedantic -g -c -static inavjaga.cpp -Wno-narrowing
 inavjaga: compile-inavjaga
 
 link:
-	g++ -std=c++17 -Wall -g -static -lpthread -o inavjaga inavjaga.o ANSI-Settings.o border.o coordinates.o cursor.o pawn.o field.o
+	g++ -std=c++17 -Wpedantic -g -static -lpthread -o inavjaga inavjaga.o ANSI-Settings.o border.o coordinates.o cursor.o pawn.o field.o
 
 clean:
 	rm -f *.o

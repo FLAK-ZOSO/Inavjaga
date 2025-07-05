@@ -67,7 +67,9 @@ int main(int argc, char* argv[]) {
         std::this_thread::sleep_for(std::chrono::milliseconds(
             (int)(FRAME_DURATION / (std::pow(1 + (int)speedup, 2)))
         )); // If there is speedup, the waiting time is reduced by a factor of 4
+        #if DEBUG
         auto start = std::chrono::high_resolution_clock::now();
+        #endif
         std::lock_guard<std::mutex> lock(streamMutex); // Lock stays until scope ends
         for (int k = 0; k < BULLET_SPEED; k++) {
             for (unsigned j = 0; j < Bullet::bullets.size(); j++) {
@@ -126,9 +128,9 @@ int main(int argc, char* argv[]) {
             end = true;
         }
         std::flush(std::cout);
+        #if DEBUG
         auto stop = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> delta = stop - start;
-        #if DEBUG
         std::cerr << "Frame number " << i << " took " << delta.count() * 1000 << "ms" << std::endl;
         #endif
     }
@@ -668,7 +670,7 @@ void Mine::explode() {
     for (int j=-2; j<=2; j++) {
         for (int i=-2; i<=2; i++) {
             if (i == 0 && j == 0) continue;
-            sista::Coordinates target = this->coordinates + (sista::Coordinates){j, i};
+            sista::Coordinates target = this->coordinates + sista::Coordinates(j, i);
             if (field->isOutOfBounds(target)) continue;
             if (field->isOccupied(target)) {
                 Entity* entity = (Entity*)field->getPawn(target);
