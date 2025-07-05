@@ -1,5 +1,7 @@
-#define VERSION "0.0.1"
+#define VERSION "0.1.0"
 #define DATE "2025-07-05"
+
+#define DEBUG 0
 
 // Field size and shape
 #define WIDTH 100
@@ -12,8 +14,8 @@
 
 // Inventory
 #define INITIAL_CLAY 5
-#define INITIAL_BULLETS 1000
-#define INITIAL_MEAT 3
+#define INITIAL_BULLETS 10
+#define INITIAL_MEAT 10
 
 // Loot
 #define LOOT_ARCHER_CLAY 0
@@ -21,7 +23,8 @@
 #define LOOT_ARCHER_MEAT 1
 
 // Costs
-#define COST_OF_MINE {1,3,0}
+#define COST_OF_MINE {1,3,0} // The cost of building a mine in the format {clay, bullets, meat}
+#define MEAT_DURATION_PERIOD 200 // Every how many frames the player eats a unit of meat
 
 // Colors
 #define RGB_BLACK ANSI::RGBColor(0,0,0)

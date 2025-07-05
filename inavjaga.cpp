@@ -48,7 +48,7 @@ int main(int argc, char* argv[]) {
     sista::SwappableField field_(WIDTH, HEIGHT);
     field = &field_;
     generateTunnels();
-    Player::player = new Player({0, 0});
+    Player::player = new Player({0, WIDTH - 1});
     Player::player->mode = Player::Mode::BULLET;
     field->addPawn(Player::player);
     spawnInitialEnemies();
@@ -117,12 +117,20 @@ int main(int argc, char* argv[]) {
                 Wall::walls[index]->getHit();
             }
         }
+        if (i % MEAT_DURATION_PERIOD == MEAT_DURATION_PERIOD - 1) {
+            Player::player->inventory.meat--;
+        }
         spawnEnemies();
         printSideInstructions(i);
+        if (endConditions()) {
+            end = true;
+        }
         std::flush(std::cout);
         auto stop = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> delta = stop - start;
+        #if DEBUG
         std::cerr << "Frame number " << i << " took " << delta.count() * 1000 << "ms" << std::endl;
+        #endif
     }
 
     end = true;
@@ -139,9 +147,28 @@ int main(int argc, char* argv[]) {
         getch();
     #endif
     #ifdef __APPLE__
-        // system("stty -raw echo");
+        // system("stty cooked echo");
         tcsetattr(0, TCSANOW, &orig_termios);
     #endif
+}
+
+bool endConditions() {
+    // Check for enemies in the top right corner area
+    for (unsigned short row = 0; row < TUNNEL_UNIT * 2; row++) {
+        for (unsigned short column = WIDTH - 1; column >= WIDTH - TUNNEL_UNIT * 2; column--) {
+            if (field->isOccupied(row, column)) {
+                if (((Entity*)field->getPawn(row, column))->type == Type::ARCHER
+                    || ((Entity*)field->getPawn(row, column))->type == Type::WORM_HEAD) {
+                    return true;
+                }
+            }
+        }
+    }
+    // Check for negative amount of meat
+    if (Player::player->inventory.meat < 0) {
+        return true;
+    }
+    return false;
 }
 
 void printSideInstructions(int i) {

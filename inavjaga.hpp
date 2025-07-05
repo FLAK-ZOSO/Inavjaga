@@ -33,6 +33,7 @@ extern std::bernoulli_distribution dumbMoveDistribution;
 void generateTunnels();
 void spawnInitialEnemies();
 void spawnEnemies();
+bool endConditions();
 void printSideInstructions(int);
 void printKeys();
 void input();
