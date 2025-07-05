@@ -1,6 +1,14 @@
 # Makefile for Inavjaga
 IMPLEMENTATIONS = include/sista/ANSI-Settings.cpp include/sista/border.cpp include/sista/coordinates.cpp include/sista/cursor.cpp include/sista/field.cpp include/sista/pawn.cpp
 
+UNAME := $(shell uname)
+STATIC_FLAG =
+ifeq ($(UNAME),Darwin)
+    STATIC_FLAG =
+else
+    STATIC_FLAG = -static
+endif
+
 all:
 	@echo "Compiling Inavjaga..."
 	$(MAKE) compile-sista
@@ -18,7 +26,7 @@ compile-inavjaga:
 inavjaga: compile-inavjaga
 
 link:
-	g++ -std=c++17 -Wpedantic -g -static -lpthread -o inavjaga inavjaga.o ANSI-Settings.o border.o coordinates.o cursor.o pawn.o field.o
+	g++ -std=c++17 -Wpedantic -g $(STATIC_FLAG) -lpthread -o inavjaga inavjaga.o ANSI-Settings.o border.o coordinates.o cursor.o pawn.o field.o
 
 clean:
 	rm -f *.o
