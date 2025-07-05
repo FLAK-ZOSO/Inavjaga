@@ -51,7 +51,7 @@ int main(int argc, char* argv[]) {
     Player::player = new Player({0, 0});
     Player::player->mode = Player::Mode::BULLET;
     field->addPawn(Player::player);
-    spawnEnemies();
+    spawnInitialEnemies();
     field->print(border);
     std::thread th(input);
     for (int i=0; !end; i++) {
@@ -69,7 +69,6 @@ int main(int argc, char* argv[]) {
         )); // If there is speedup, the waiting time is reduced by a factor of 4
         auto start = std::chrono::high_resolution_clock::now();
         std::lock_guard<std::mutex> lock(streamMutex); // Lock stays until scope ends
-        std::cerr << "Before bullets" << std::endl;
         for (int k = 0; k < BULLET_SPEED; k++) {
             for (unsigned j = 0; j < Bullet::bullets.size(); j++) {
                 Bullet* bullet = Bullet::bullets[j];
@@ -94,7 +93,6 @@ int main(int argc, char* argv[]) {
                 }
             }
         }
-        std::cerr << "Before mines" << std::endl;
         for (unsigned j = 0; j < Mine::mines.size(); j++) {
             if (j >= Mine::mines.size()) break;
             Mine* mine = Mine::mines[j];
@@ -104,7 +102,6 @@ int main(int argc, char* argv[]) {
                 }
             }
         }
-        std::cerr << "Before archers" << std::endl;
         for (auto archer : Archer::archers) {
             if (Archer::moving(rng)) {
                 archer->move();
@@ -113,17 +110,14 @@ int main(int argc, char* argv[]) {
                 archer->shoot();
             }
         }
-        std::cerr << "Before walls" << std::endl;
         if (!Wall::walls.empty() && Wall::wearing(rng)) {
             for (int j = 0; j < DAMAGED_WALLS_COUNT; j++) {
                 if (Wall::walls.empty()) break;
                 int index = std::uniform_int_distribution<int>(0, Wall::walls.size() - 1)(rng);
-                std::cerr << "Damaging wall " << index << std::flush;
-                std::cerr << " at {" << Wall::walls[index]->getCoordinates().y << ", " << Wall::walls[index]->getCoordinates().x << "}" << std::flush;
-                std::cerr << " with " << Wall::walls[index]->strength << "hp" << std::endl;
                 Wall::walls[index]->getHit();
             }
         }
+        spawnEnemies();
         printSideInstructions(i);
         std::flush(std::cout);
         auto stop = std::chrono::high_resolution_clock::now();
@@ -268,7 +262,7 @@ void generateTunnels() {
     }
 }
 
-void spawnEnemies() {
+void spawnInitialEnemies() {
     std::deque<sista::Coordinates> freeBaseCoordinates;
     for (int column = 0; column < WIDTH; column++) {
         sista::Coordinates coords = {HEIGHT - 1, column};
@@ -281,6 +275,15 @@ void spawnEnemies() {
     for (int i = 0; i < INITIAL_ARCHERS; i++) {
         field->addPawn(new Archer(freeBaseCoordinates.front()));
         freeBaseCoordinates.pop_front();
+    }
+}
+
+void spawnEnemies() {
+    if (Archer::spawning(rng)) {
+        sista::Coordinates coords = {HEIGHT - 1, rand() % WIDTH};
+        if (field->isFree(coords)) {
+            field->addPrintPawn(new Archer(coords));
+        }
     }
 }
 
@@ -425,10 +428,8 @@ bool Wall::getHit() {
         sista::Coordinates coords, breach;
         bool foundBelowExit = false;
         bool foundAboveExit = false;
-        std::cerr << "\tStarting the DFS" << std::endl;
         while (!dfs.empty() && !foundBelowExit && !foundAboveExit) {
             coords = dfs.top();
-            std::cerr << "\t\tDFS proceeding with {" << coords.y << ", " << coords.x << "}" << std::endl;
             dfs.pop();
 
             if (field->isOutOfBounds(coords)) continue; // Exiting the field
@@ -464,8 +465,6 @@ bool Wall::getHit() {
             dfs.push(coords + directionMap[Direction::DOWN]);
             dfs.push(coords + directionMap[Direction::RIGHT]);
         }
-        std::cerr << "\tfoundBelowExit=" << foundBelowExit;
-        std::cerr << "\tfoundAboveExit=" << foundAboveExit << std::endl;
         if (foundBelowExit && foundAboveExit) {
             if (breaches.count(breach.y)) {
                 breaches[breach.y].push_back(breach.x);
@@ -473,9 +472,7 @@ bool Wall::getHit() {
                 breaches[breach.y] = {breach.x};
             }
         }
-        std::cerr << "\tBefore removing" << std::endl;
         this->remove();
-        std::cerr << "\tAfter removing" << std::endl;
         return true;
     }
     return false;
@@ -526,7 +523,7 @@ void Bullet::move() {
                 break;
             }
             case Type::ARCHER: {
-                entity->remove();
+                ((Archer*)entity)->die();
                 break;
             }
             default:
@@ -875,6 +872,16 @@ bool Archer::shoot(Direction direction) {
         return false;
     }
 }
+void Archer::die() {
+    Archer::archers.erase(std::find(Archer::archers.begin(), Archer::archers.end(), this));
+    field->erasePawn(this);
+    field->addPrintPawn(new Chest(coordinates, {
+        LOOT_ARCHER_CLAY,
+        LOOT_ARCHER_BULLETS,
+        LOOT_ARCHER_MEAT
+    }));
+    delete this;
+}
 void Archer::remove() {
     Archer::archers.erase(std::find(Archer::archers.begin(), Archer::archers.end(), this));
     field->erasePawn(this);
@@ -882,6 +889,7 @@ void Archer::remove() {
 }
 std::bernoulli_distribution Archer::moving(ARCHER_MOVING_PROBABILITY);
 std::bernoulli_distribution Archer::shooting(ARCHER_SHOOTING_PROBABILITY);
+std::bernoulli_distribution Archer::spawning(ARCHER_SPAWNING_PROBABILITY);
 ANSI::Settings Archer::archerStyle = {
     ANSI::ForegroundColor::F_CYAN,
     ANSI::BackgroundColor::B_BLACK,

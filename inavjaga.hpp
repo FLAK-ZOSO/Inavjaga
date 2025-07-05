@@ -31,6 +31,7 @@ extern std::map<int, std::vector<int>> breaches; // {y, {x1, x2, x3...}}
 extern std::bernoulli_distribution dumbMoveDistribution;
 
 void generateTunnels();
+void spawnInitialEnemies();
 void spawnEnemies();
 void printSideInstructions(int);
 void printKeys();
@@ -168,6 +169,7 @@ public:
     static std::vector<Archer*> archers;
     static std::bernoulli_distribution shooting;
     static std::bernoulli_distribution moving;
+    static std::bernoulli_distribution spawning;
 
     Archer();
     Archer(sista::Coordinates);
@@ -177,4 +179,5 @@ public:
     bool move(Direction);
     void shoot();
     bool shoot(Direction);
+    void die();
 };
