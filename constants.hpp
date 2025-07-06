@@ -21,6 +21,9 @@
 #define LOOT_ARCHER_CLAY 0
 #define LOOT_ARCHER_BULLETS 3
 #define LOOT_ARCHER_MEAT 1
+#define LOOT_WORM_HEAD_CLAY 3
+#define LOOT_WORM_HEAD_BULLETS 0
+#define LOOT_WORM_HEAD_MEAT 3
 
 // Costs
 #define COST_OF_MINE {1,3,0} // The cost of building a mine in the format {clay, bullets, meat}
@@ -35,6 +38,7 @@
 #define MINE_MINIMUM_DAMAGE 1
 #define MINE_MAXIMUM_DAMAGE 3
 #define INITIAL_WALL_STRENGTH 7
+#define WORM_HEALTH_POINTS 3
 
 // Probabilistic settings
 #define WALL_WEARING_PROBABILITY 0.1
@@ -44,6 +48,13 @@
 #define ARCHER_SPAWNING_PROBABILITY 0.01
 #define ARCHER_MOVING_PROBABILITY 0.33
 #define ARCHER_SHOOTING_PROBABILITY 0.05
+#define WORM_TURNING_PROBABILITY 0.10
+#define WORM_SPAWNING_PROBABILITY 0.001
+#define CLAY_RELEASE_PROBABILITY 0.01
 
 // Spawn settings
 #define INITIAL_ARCHERS 6
+#define INITIAL_WORMS 2
+
+// Worm
+#define WORM_LENGTH 7

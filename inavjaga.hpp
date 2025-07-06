@@ -182,3 +182,41 @@ public:
     bool shoot(Direction);
     void die();
 };
+
+class Worm; // Forward implicit declaration
+class WormBody : public Entity {
+public:
+    static ANSI::Settings wormBodyStyle;
+    static std::vector<WormBody*> wormBodies;
+    Worm* head;
+
+    WormBody();
+    WormBody(sista::Coordinates, Direction);
+    void remove() override;
+
+    void die();
+};
+
+/* Worm - represents a Worm but as a `sista::Pawn` it corresponds to the head */
+class Worm : public Entity {
+public:
+    static ANSI::Settings wormHeadStyle;
+    static std::vector<Worm*> worms;
+    static std::bernoulli_distribution turning;
+    static std::bernoulli_distribution spawning;
+    static std::bernoulli_distribution clayRelease;
+    std::vector<WormBody*> body;
+    Direction direction;
+    short int hp;
+
+    Worm();
+    Worm(sista::Coordinates);
+    Worm(sista::Coordinates, Direction);
+    void remove() override;
+
+    void move();
+    void turn();
+    void turn(Direction);
+    void getHit();
+    void die();
+};

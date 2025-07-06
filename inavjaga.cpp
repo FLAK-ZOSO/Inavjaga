@@ -15,6 +15,8 @@ std::vector<Chest*> Chest::chests;
 std::vector<Portal*> Portal::portals;
 std::vector<Mine*> Mine::mines;
 std::vector<Archer*> Archer::archers;
+std::vector<WormBody*> WormBody::wormBodies;
+std::vector<Worm*> Worm::worms;
 
 sista::SwappableField* field;
 sista::Cursor cursor;
@@ -111,6 +113,13 @@ int main(int argc, char* argv[]) {
             if (Archer::shooting(rng)) {
                 archer->shoot();
             }
+        }
+        for (auto worm : Worm::worms) {
+            if (Worm::turning(rng)) {
+                // TODO: proper turning intelligence
+                worm->turn(Direction::LEFT);
+            }
+            worm->move();
         }
         if (!Wall::walls.empty() && Wall::wearing(rng)) {
             for (int j = 0; j < DAMAGED_WALLS_COUNT; j++) {
@@ -305,6 +314,10 @@ void spawnInitialEnemies() {
         field->addPawn(new Archer(freeBaseCoordinates.front()));
         freeBaseCoordinates.pop_front();
     }
+    for (int i = 0; i < INITIAL_WORMS; i++) {
+        field->addPawn(new Worm(freeBaseCoordinates.front(), Direction::UP));
+        freeBaseCoordinates.pop_front();
+    }
 }
 
 void spawnEnemies() {
@@ -312,6 +325,12 @@ void spawnEnemies() {
         sista::Coordinates coords = {HEIGHT - 1, rand() % WIDTH};
         if (field->isFree(coords)) {
             field->addPrintPawn(new Archer(coords));
+        }
+    }
+    if (Worm::spawning(rng)) {
+        sista::Coordinates coords = {HEIGHT - 1, rand() % WIDTH};
+        if (field->isFree(coords)) {
+            field->addPrintPawn(new Worm(coords, Direction::UP));
         }
     }
 }
@@ -426,6 +445,12 @@ void deallocateAll() {
     for (auto archer : Archer::archers) {
         delete archer;
     }
+    for (auto wormBody : WormBody::wormBodies) {
+        delete wormBody;
+    }
+    for (auto worm : Worm::worms) {
+        delete worm;
+    }
 }
 
 // Entity::Entity() : sista::Pawn(' ', sista::Coordinates(0, 0), Player::playerStyle), type(Type::PLAYER) {}
@@ -433,7 +458,7 @@ Entity::Entity(char symbol, sista::Coordinates coordinates, ANSI::Settings& sett
     sista::Pawn(symbol, coordinates, settings), type(type) {}
 
 
-Wall::Wall() : Entity('#', {0, 0}, wallStyle, Type::WALL) {}
+// Wall::Wall() : Entity('#', {0, 0}, wallStyle, Type::WALL) {}
 Wall::Wall(sista::Coordinates coordinates, short int strength) :
     Entity('#', coordinates, wallStyle, Type::WALL), strength(strength) {
     Wall::walls.push_back(this);
@@ -513,7 +538,7 @@ ANSI::Settings Wall::wallStyle = {
     ANSI::Attribute::BRIGHT
 };
 
-Bullet::Bullet() : Entity('>', {0, 0}, bulletStyle, Type::BULLET), direction(Direction::RIGHT), collided(false) {}
+// Bullet::Bullet() : Entity('>', {0, 0}, bulletStyle, Type::BULLET), direction(Direction::RIGHT), collided(false) {}
 Bullet::Bullet(sista::Coordinates coordinates, Direction direction) :
     Entity(directionSymbol[direction], coordinates, bulletStyle, Type::BULLET), direction(direction), collided(false) {
     Bullet::bullets.push_back(this);
@@ -567,7 +592,7 @@ ANSI::Settings Bullet::bulletStyle = {
     ANSI::Attribute::BRIGHT
 };
 
-EnemyBullet::EnemyBullet() : Entity('>', {0, 0}, enemyBulletStyle, Type::ENEMY_BULLET), direction(Direction::RIGHT), collided(false) {}
+// EnemyBullet::EnemyBullet() : Entity('>', {0, 0}, enemyBulletStyle, Type::ENEMY_BULLET), direction(Direction::RIGHT), collided(false) {}
 EnemyBullet::EnemyBullet(sista::Coordinates coordinates, Direction direction) :
     Entity(directionSymbol[direction], coordinates, enemyBulletStyle, Type::ENEMY_BULLET), direction(direction), collided(false) {
     EnemyBullet::enemyBullets.push_back(this);
@@ -620,7 +645,7 @@ ANSI::Settings EnemyBullet::enemyBulletStyle = {
     ANSI::Attribute::BRIGHT
 };
 
-Chest::Chest() : Entity('C', {0, 0}, chestStyle, Type::CHEST), inventory(INITIAL_INVENTORY) {}
+// Chest::Chest() : Entity('C', {0, 0}, chestStyle, Type::CHEST), inventory(INITIAL_INVENTORY) {}
 Chest::Chest(sista::Coordinates coordinates, Inventory inventory) : Entity('C', coordinates, chestStyle, Type::CHEST), inventory(inventory) {
     Chest::chests.push_back(this);
 }
@@ -635,7 +660,7 @@ ANSI::Settings Chest::chestStyle = {
     ANSI::Attribute::REVERSE
 };
 
-Portal::Portal() : Entity('&', {0, 0}, portalStyle, Type::PORTAL) {}
+// Portal::Portal() : Entity('&', {0, 0}, portalStyle, Type::PORTAL) {}
 Portal::Portal(sista::Coordinates coordinates) : Entity('&', coordinates, portalStyle, Type::PORTAL) {
     Portal::portals.push_back(this);
 }
@@ -650,7 +675,7 @@ ANSI::Settings Portal::portalStyle = {
     ANSI::Attribute::FAINT
 };
 
-Mine::Mine() : Entity('*', {0, 0}, mineStyle, Type::MINE), triggered(false) {}
+// Mine::Mine() : Entity('*', {0, 0}, mineStyle, Type::MINE), triggered(false) {}
 Mine::Mine(sista::Coordinates coordinates) : Entity('*', coordinates, mineStyle, Type::MINE), triggered(false) {
     Mine::mines.push_back(this);
 }
@@ -706,7 +731,7 @@ ANSI::Settings Mine::triggeredMineStyle = {
     ANSI::Attribute::BLINK
 };
 
-Archer::Archer() : Entity('A', {0, 0}, archerStyle, Type::ARCHER) {}
+// Archer::Archer() : Entity('A', {0, 0}, archerStyle, Type::ARCHER) {}
 Archer::Archer(sista::Coordinates coordinates) : Entity('A', coordinates, archerStyle, Type::ARCHER) {
     Archer::archers.push_back(this);
 }
@@ -924,6 +949,135 @@ ANSI::Settings Archer::archerStyle = {
     ANSI::BackgroundColor::B_BLACK,
     ANSI::Attribute::STRIKETHROUGH
 };
+
+// WormBody::WormBody() : Entity('<', {0, 0}, wormBodyStyle, Type::WORM_BODY) {}
+WormBody::WormBody(sista::Coordinates coordinates, Direction direction) : Entity(directionSymbol[direction], coordinates, wormBodyStyle, Type::WORM_BODY) {
+    WormBody::wormBodies.push_back(this);
+}
+void WormBody::remove() {
+    WormBody::wormBodies.erase(std::find(WormBody::wormBodies.begin(), WormBody::wormBodies.end(), this));
+    field->erasePawn(this);
+    delete this;
+}
+ANSI::Settings WormBody::wormBodyStyle = ANSI::Settings(
+    ANSI::ForegroundColor::F_GREEN,
+    ANSI::BackgroundColor::B_BLACK,
+    ANSI::Attribute::BRIGHT
+);
+
+// Worm::Worm() : Entity('H', {0, 0}, wormHeadStyle, Type::WORM_BODY) {}
+Worm::Worm(sista::Coordinates coordinates) : Entity('H', coordinates, wormHeadStyle, Type::WORM_BODY), hp(WORM_HEALTH_POINTS) {
+    direction = (Direction)(rand() % 4);
+    Worm::worms.push_back(this);
+}
+Worm::Worm(sista::Coordinates coordinates, Direction direction) : Worm(coordinates) {
+    this->direction = direction;
+}
+void Worm::move() {
+    sista::Coordinates next = coordinates + directionMap[direction];
+    if (field->isOutOfBounds(next)) {
+        Direction toTheLeft = (Direction)((direction - 1) % 4);
+        Direction toTheRight = (Direction)((direction + 1) % 4);
+        Direction oldDirection = direction;
+        direction = ((Direction[]){toTheLeft, toTheRight})[rand() % 2];
+        next = coordinates + directionMap[direction];
+        if (field->isOutOfBounds(next)) {
+            if (direction == toTheLeft) {
+                next = coordinates + directionMap[toTheRight];
+                if (field->isOutOfBounds(next)) {
+                    direction = oldDirection;
+                    this->getHit();
+                    return;
+                }
+            } else if (direction == toTheRight) {
+                next = coordinates + directionMap[toTheLeft];
+                if (field->isOutOfBounds(next)) {
+                    direction = oldDirection;
+                    this->getHit();
+                    return;
+                }
+            }
+        }
+    }
+    sista::Coordinates oldHeadCoordinates = coordinates;
+    if (field->isFree(next)) {
+        /* Movement inspired from Dune (https://github.com/Lioydiano/Dune/blob/90a1f9c412258f701e3dfe949b05c6bcaa171e9f/dune.cpp#L386) */
+        field->movePawn(this, next);
+        // We now create a piece of body to leave behind the head, a "neck"
+        WormBody* neck = new WormBody(oldHeadCoordinates, direction);
+        field->addPrintPawn(neck);
+        body.push_back(neck);
+        // Consider that we added a body piece, so we need to ensure it does not grow too much
+        if (body.size() > WORM_LENGTH) {
+            WormBody* tail = body.front();
+            field->erasePawn(tail);
+            if (clayRelease(rng)) {
+                sista::Coordinates drop = tail->getCoordinates();
+                field->addPrintPawn(new Chest(drop, {1, 0, 0}));
+            }
+            body.erase(body.begin());
+            WormBody::wormBodies.erase(std::find(WormBody::wormBodies.begin(), WormBody::wormBodies.end(), tail));
+            delete tail;
+        }
+    } else if (field->isOccupied(next)) {
+        Entity* entity = (Entity*)field->getPawn(next);
+        switch (entity->type) {
+            case Type::PLAYER:
+                end = true;
+                break;
+            case Type::WALL:
+                if (((Wall*)entity)->strength > 1)
+                    ((Wall*)entity)->getHit();
+            case Type::WORM_HEAD: case Type::WORM_BODY: case Type::PORTAL:
+                this->turn(((Direction[]){Direction::LEFT, Direction::RIGHT})[rand() % 2]);
+                break;
+            default:
+                entity->remove();
+        }
+    }
+}
+void Worm::turn(Direction direction_) {
+    if (direction_ == Direction::LEFT)
+        this->direction = (Direction)((this->direction - 1) % 4);
+    else if (direction_ == Direction::RIGHT)
+        this->direction = (Direction)((this->direction + 1) % 4);
+}
+void Worm::getHit() {
+    if (--hp <= 0) {
+        this->die();
+    }
+}
+void Worm::die() {
+    while (!body.empty()) {
+        WormBody* tail = body.front();
+        sista::Coordinates drop = tail->getCoordinates();
+        field->addPrintPawn(new Chest(drop, {0, 1, 0}));
+        body.erase(body.begin());
+        tail->remove();
+    }
+    Worm::worms.erase(std::find(Worm::worms.begin(), Worm::worms.end(), this));
+    field->erasePawn(this);
+    field->addPrintPawn(new Chest(coordinates, {
+        LOOT_WORM_HEAD_CLAY,
+        LOOT_WORM_HEAD_BULLETS,
+        LOOT_WORM_HEAD_MEAT
+    }));
+    delete this;
+}
+void Worm::remove() {
+    Worm::worms.erase(std::find(Worm::worms.begin(), Worm::worms.end(), this));
+    field->erasePawn(this);
+    delete this;
+}
+std::bernoulli_distribution Worm::turning(WORM_TURNING_PROBABILITY);
+std::bernoulli_distribution Worm::spawning(WORM_SPAWNING_PROBABILITY);
+std::bernoulli_distribution Worm::clayRelease(CLAY_RELEASE_PROBABILITY);
+ANSI::Settings Worm::wormHeadStyle = ANSI::Settings(
+    ANSI::ForegroundColor::F_GREEN,
+    ANSI::BackgroundColor::B_BLACK,
+    ANSI::Attribute::RAPID_BLINK
+);
+
 
 Player::Player(sista::Coordinates coordinates) : Entity('$', coordinates, playerStyle, Type::PLAYER), mode(Player::Mode::COLLECT), inventory(INITIAL_INVENTORY) {}
 Player::Player() : Entity('$', {0, 0}, playerStyle, Type::PLAYER), mode(Player::Mode::COLLECT), inventory(INITIAL_INVENTORY) {}
