@@ -114,7 +114,9 @@ int main(int argc, char* argv[]) {
                 archer->shoot();
             }
         }
-        for (auto worm : Worm::worms) {
+        for (unsigned j = 0; j < Worm::worms.size(); j++) {
+            Worm* worm = Worm::worms[j];
+            if (worm == nullptr) continue;
             if (Worm::turning(rng)) {
                 // TODO: proper turning intelligence
                 worm->turn(Direction::LEFT);
@@ -1058,11 +1060,10 @@ void Worm::move() {
                     ((Wall*)entity)->getHit(); // They can weaken a wall but not destroy it
                 this->turn(((Direction[]){Direction::LEFT, Direction::RIGHT})[rand() % 2]);
                 break;
-            case Type::WORM_BODY: case Type::PORTAL:
-                this->turn(((Direction[]){Direction::LEFT, Direction::RIGHT})[rand() % 2]);
-                break;
             case Type::WORM_HEAD:
                 ((Worm*)entity)->getHit();
+            case Type::WORM_BODY: case Type::PORTAL:
+                this->turn(((Direction[]){Direction::LEFT, Direction::RIGHT})[rand() % 2]);
                 break;
             default:
                 entity->remove();
