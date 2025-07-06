@@ -580,6 +580,16 @@ void Bullet::move() {
                 ((Archer*)entity)->die();
                 break;
             }
+            case Type::WORM_HEAD: {
+                Worm* worm = (Worm*)entity;
+                worm->getHit();
+                break;
+            }
+            case Type::WORM_BODY: {
+                WormBody* wormBody = (WormBody*)entity;
+                wormBody->die();
+                break;
+            }
             default:
                 break;
         }
@@ -628,6 +638,16 @@ void EnemyBullet::move() {
                 EnemyBullet* bullet = (EnemyBullet*)entity;
                 if (bullet->collided) return;
                 bullet->collided = true;
+                break;
+            }
+            case Type::WORM_HEAD: {
+                Worm* worm = (Worm*)entity;
+                worm->getHit();
+                break;
+            }
+            case Type::WORM_BODY: {
+                WormBody* wormBody = (WormBody*)entity;
+                wormBody->die();
                 break;
             }
             case Type::PLAYER:
@@ -954,6 +974,12 @@ ANSI::Settings Archer::archerStyle = {
 WormBody::WormBody(sista::Coordinates coordinates, Direction direction) : Entity(directionSymbol[direction], coordinates, wormBodyStyle, Type::WORM_BODY) {
     WormBody::wormBodies.push_back(this);
 }
+void WormBody::die() {
+    sista::Coordinates drop = this->coordinates;
+    field->addPrintPawn(new Chest(drop, {0, 1, 0}));
+    WormBody::wormBodies.erase(std::find(WormBody::wormBodies.begin(), WormBody::wormBodies.end(), this));
+    delete this;
+}
 void WormBody::remove() {
     WormBody::wormBodies.erase(std::find(WormBody::wormBodies.begin(), WormBody::wormBodies.end(), this));
     field->erasePawn(this);
@@ -966,7 +992,7 @@ ANSI::Settings WormBody::wormBodyStyle = ANSI::Settings(
 );
 
 // Worm::Worm() : Entity('H', {0, 0}, wormHeadStyle, Type::WORM_BODY) {}
-Worm::Worm(sista::Coordinates coordinates) : Entity('H', coordinates, wormHeadStyle, Type::WORM_BODY), hp(WORM_HEALTH_POINTS) {
+Worm::Worm(sista::Coordinates coordinates) : Entity('H', coordinates, wormHeadStyle, Type::WORM_HEAD), hp(WORM_HEALTH_POINTS) {
     direction = (Direction)(rand() % 4);
     Worm::worms.push_back(this);
 }
@@ -974,9 +1000,10 @@ Worm::Worm(sista::Coordinates coordinates, Direction direction) : Worm(coordinat
     this->direction = direction;
 }
 void Worm::move() {
+    sista::Coordinates oldHeadCoordinates = coordinates;
     sista::Coordinates next = coordinates + directionMap[direction];
     if (field->isOutOfBounds(next)) {
-        Direction toTheLeft = (Direction)((direction - 1) % 4);
+        Direction toTheLeft = (Direction)((direction + 3) % 4);
         Direction toTheRight = (Direction)((direction + 1) % 4);
         Direction oldDirection = direction;
         direction = ((Direction[]){toTheLeft, toTheRight})[rand() % 2];
@@ -999,7 +1026,6 @@ void Worm::move() {
             }
         }
     }
-    sista::Coordinates oldHeadCoordinates = coordinates;
     if (field->isFree(next)) {
         /* Movement inspired from Dune (https://github.com/Lioydiano/Dune/blob/90a1f9c412258f701e3dfe949b05c6bcaa171e9f/dune.cpp#L386) */
         field->movePawn(this, next);
@@ -1027,9 +1053,14 @@ void Worm::move() {
                 break;
             case Type::WALL:
                 if (((Wall*)entity)->strength > 1)
-                    ((Wall*)entity)->getHit();
-            case Type::WORM_HEAD: case Type::WORM_BODY: case Type::PORTAL:
+                    ((Wall*)entity)->getHit(); // They can weaken a wall but not destroy it
                 this->turn(((Direction[]){Direction::LEFT, Direction::RIGHT})[rand() % 2]);
+                break;
+            case Type::WORM_BODY: case Type::PORTAL:
+                this->turn(((Direction[]){Direction::LEFT, Direction::RIGHT})[rand() % 2]);
+                break;
+            case Type::WORM_HEAD:
+                ((Worm*)entity)->getHit();
                 break;
             default:
                 entity->remove();
@@ -1038,7 +1069,7 @@ void Worm::move() {
 }
 void Worm::turn(Direction direction_) {
     if (direction_ == Direction::LEFT)
-        this->direction = (Direction)((this->direction - 1) % 4);
+        this->direction = (Direction)((this->direction + 3) % 4);
     else if (direction_ == Direction::RIGHT)
         this->direction = (Direction)((this->direction + 1) % 4);
 }
@@ -1050,10 +1081,8 @@ void Worm::getHit() {
 void Worm::die() {
     while (!body.empty()) {
         WormBody* tail = body.front();
-        sista::Coordinates drop = tail->getCoordinates();
-        field->addPrintPawn(new Chest(drop, {0, 1, 0}));
         body.erase(body.begin());
-        tail->remove();
+        tail->die();
     }
     Worm::worms.erase(std::find(Worm::worms.begin(), Worm::worms.end(), this));
     field->erasePawn(this);
