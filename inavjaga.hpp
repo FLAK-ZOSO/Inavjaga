@@ -188,7 +188,7 @@ class WormBody : public Entity {
 public:
     static ANSI::Settings wormBodyStyle;
     static std::vector<WormBody*> wormBodies;
-    // Worm* head;
+    Worm* head;
 
     WormBody();
     WormBody(sista::Coordinates, Direction);

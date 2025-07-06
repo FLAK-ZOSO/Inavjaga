@@ -978,6 +978,7 @@ void WormBody::die() {
     sista::Coordinates drop = this->coordinates;
     field->addPrintPawn(new Chest(drop, {0, 1, 0}));
     WormBody::wormBodies.erase(std::find(WormBody::wormBodies.begin(), WormBody::wormBodies.end(), this));
+    this->head->body.erase(std::find(this->head->body.begin(), this->head->body.end(), this));
     delete this;
 }
 void WormBody::remove() {
@@ -1031,14 +1032,15 @@ void Worm::move() {
         field->movePawn(this, next);
         // We now create a piece of body to leave behind the head, a "neck"
         WormBody* neck = new WormBody(oldHeadCoordinates, direction);
+        neck->head = this;
         field->addPrintPawn(neck);
         body.push_back(neck);
         // Consider that we added a body piece, so we need to ensure it does not grow too much
         if (body.size() > WORM_LENGTH) {
             WormBody* tail = body.front();
+            sista::Coordinates drop = tail->getCoordinates();
             field->erasePawn(tail);
             if (clayRelease(rng)) {
-                sista::Coordinates drop = tail->getCoordinates();
                 field->addPrintPawn(new Chest(drop, {1, 0, 0}));
             }
             body.erase(body.begin());
