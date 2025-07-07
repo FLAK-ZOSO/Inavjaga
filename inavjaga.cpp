@@ -738,6 +738,15 @@ void Mine::explode() {
                     }
                     case Type::PLAYER: case Type::PORTAL:
                         break; // Player and Portals get no damage from mines
+                    case Type::ARCHER:
+                        ((Archer*)entity)->die();
+                        break;
+                    case Type::WORM_BODY:
+                        ((WormBody*)entity)->die();
+                        break;
+                    case Type::WORM_HEAD:
+                        ((Worm*)entity)->getHit();
+                        break;
                     default:
                         entity->remove();
                 }
