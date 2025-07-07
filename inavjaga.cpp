@@ -263,13 +263,21 @@ void generateTunnels() {
     int portalCoordinate;
     for (int row=0; row<HEIGHT; row++) {
         if (row % (TUNNEL_UNIT * 3) == 0 && row + TUNNEL_UNIT * 3 < HEIGHT) {
-            portalCoordinate = distr(rng);
-            Portal* abovePortal = new Portal({row + TUNNEL_UNIT * 2, portalCoordinate});
-            Portal* belowPortal = new Portal({row + TUNNEL_UNIT * 3 - 1, portalCoordinate});
-            abovePortal->exit = belowPortal;
-            belowPortal->exit = abovePortal;
-            field->addPawn(abovePortal);
-            field->addPawn(belowPortal);
+            for (int i = 0; i < PORTALS_PER_LINE; i++) {
+                sista::Coordinates abovePortalCoordinates;
+                sista::Coordinates belowPortalCoordinates;
+                do {
+                    portalCoordinate = distr(rng);
+                    abovePortalCoordinates = {row + TUNNEL_UNIT * 2, portalCoordinate};
+                    belowPortalCoordinates = {row + TUNNEL_UNIT * 3 - 1, portalCoordinate};
+                } while (!field->isFree(abovePortalCoordinates) || !field->isFree(belowPortalCoordinates));
+                Portal* abovePortal = new Portal(abovePortalCoordinates);
+                Portal* belowPortal = new Portal(belowPortalCoordinates);
+                abovePortal->exit = belowPortal;
+                belowPortal->exit = abovePortal;
+                field->addPawn(abovePortal);
+                field->addPawn(belowPortal);
+            }
         }
 
         if (row % (TUNNEL_UNIT * 3) >= TUNNEL_UNIT * 2) { // Every two units skipped, one is built

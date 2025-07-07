@@ -14,6 +14,7 @@ all:
 	$(MAKE) compile-sista
 	$(MAKE) compile-inavjaga
 	$(MAKE) link
+	$(MAKE) clean
 	@echo "Inavjaga compiled successfully!"
 install: all
 

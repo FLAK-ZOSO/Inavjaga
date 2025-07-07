@@ -7,6 +7,7 @@
 #define WIDTH 100
 #define HEIGHT 30
 #define TUNNEL_UNIT 3
+#define PORTALS_PER_LINE 2
 
 // Game speed
 #define FRAME_DURATION 100
