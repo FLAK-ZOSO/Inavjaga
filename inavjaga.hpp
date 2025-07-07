@@ -207,6 +207,7 @@ public:
     static std::bernoulli_distribution eatingArcher;
     static std::bernoulli_distribution eatingTail;
     static std::bernoulli_distribution clayRelease;
+    static Direction options[2];
     std::vector<WormBody*> body;
     Direction direction;
     bool collided;

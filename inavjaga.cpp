@@ -1031,7 +1031,7 @@ void Worm::move() {
         Direction toTheLeft = (Direction)((direction + 3) % 4);
         Direction toTheRight = (Direction)((direction + 1) % 4);
         Direction oldDirection = direction;
-        direction = ((Direction[]){toTheLeft, toTheRight})[rand() % 2];
+        direction = options[rand() % 2];
         next = coordinates + directionMap[direction];
         if (field->isOutOfBounds(next)) {
             if (direction == toTheLeft) {
@@ -1080,7 +1080,7 @@ void Worm::move() {
             case Type::WALL:
                 if (((Wall*)entity)->strength > 1)
                     ((Wall*)entity)->getHit(); // They can weaken a wall but not destroy it
-                this->turn(((Direction[]){Direction::LEFT, Direction::RIGHT})[rand() % 2]);
+                this->turn(options[rand() % 2]);
                 break;
             case Type::WORM_HEAD:
                 if (((Worm*)entity)->hp <= 1) {
@@ -1088,18 +1088,18 @@ void Worm::move() {
                 }
                 ((Worm*)entity)->getHit();
             case Type::PORTAL:
-                this->turn(((Direction[]){Direction::LEFT, Direction::RIGHT})[rand() % 2]);
+                this->turn(options[rand() % 2]);
                 break;
             case Type::WORM_BODY:
                 if (!eatingTail(rng)) {
-                    this->turn(((Direction[]){Direction::LEFT, Direction::RIGHT})[rand() % 2]);
+                    this->turn(options[rand() % 2]);
                     break;
                 }
                 ((WormBody*)entity)->die();
                 break;
             case Type::ARCHER:
                 if (!eatingArcher(rng)) {
-                    this->turn(((Direction[]){Direction::LEFT, Direction::RIGHT})[rand() % 2]);
+                    this->turn(options[rand() % 2]);
                     break;
                 }
             default:
@@ -1109,11 +1109,11 @@ void Worm::move() {
 }
 void Worm::turn() {
     if (dumbMoveDistribution(rng)) {
-        this->turn(((Direction[]){Direction::LEFT, Direction::RIGHT})[rand() % 2]);
+        this->turn(options[rand() % 2]);
         return;
     }
     // TODO: proper turning intelligence
-    this->turn(((Direction[]){Direction::LEFT, Direction::RIGHT})[rand() % 2]);
+    this->turn(options[rand() % 2]);
 }
 void Worm::turn(Direction direction_) {
     if (direction_ == Direction::LEFT)
@@ -1146,6 +1146,7 @@ void Worm::remove() {
     field->erasePawn(this);
     delete this;
 }
+Direction Worm::options[2] = {Direction::LEFT, Direction::RIGHT};
 std::bernoulli_distribution Worm::turning(WORM_TURNING_PROBABILITY);
 std::bernoulli_distribution Worm::spawning(WORM_SPAWNING_PROBABILITY);
 std::bernoulli_distribution Worm::eatingTail(WORM_EATING_TAIL_PROBABILITY);
