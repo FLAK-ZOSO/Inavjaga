@@ -1,10 +1,10 @@
-#define VERSION "0.2.0"
+#define VERSION "0.2.1"
 #define DATE "2025-07-07"
 
 #define DEBUG 0
 
 // Field size and shape
-#define WIDTH 100
+#define WIDTH 70
 #define HEIGHT 30
 #define TUNNEL_UNIT 3
 #define PORTALS_PER_LINE 2

@@ -1030,19 +1030,22 @@ void Worm::move() {
     if (field->isOutOfBounds(next)) {
         Direction toTheLeft = (Direction)((direction + 3) % 4);
         Direction toTheRight = (Direction)((direction + 1) % 4);
+        Direction turningOptions[] = {toTheLeft, toTheRight};
         Direction oldDirection = direction;
-        direction = options[rand() % 2];
+        direction = turningOptions[rand() % 2];
         next = coordinates + directionMap[direction];
         if (field->isOutOfBounds(next)) {
             if (direction == toTheLeft) {
-                next = coordinates + directionMap[toTheRight];
+                direction = toTheRight;
+                next = coordinates + directionMap[direction];
                 if (field->isOutOfBounds(next)) {
                     direction = oldDirection;
                     this->getHit();
                     return;
                 }
             } else if (direction == toTheRight) {
-                next = coordinates + directionMap[toTheLeft];
+                direction = toTheLeft;
+                next = coordinates + directionMap[direction];
                 if (field->isOutOfBounds(next)) {
                     direction = oldDirection;
                     this->getHit();
