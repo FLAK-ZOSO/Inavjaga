@@ -207,6 +207,7 @@ public:
     static std::bernoulli_distribution clayRelease;
     std::vector<WormBody*> body;
     Direction direction;
+    bool collided;
     short int hp;
 
     Worm();

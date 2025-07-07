@@ -117,11 +117,17 @@ int main(int argc, char* argv[]) {
         for (unsigned j = 0; j < Worm::worms.size(); j++) {
             Worm* worm = Worm::worms[j];
             if (worm == nullptr) continue;
+            if (worm->collided) continue;
             if (Worm::turning(rng)) {
                 // TODO: proper turning intelligence
                 worm->turn(Direction::LEFT);
             }
             worm->move();
+        }
+        for (Worm* worm : Worm::worms) {
+            if (worm->collided) {
+                worm->die();
+            }
         }
         if (!Wall::walls.empty() && Wall::wearing(rng)) {
             for (int j = 0; j < DAMAGED_WALLS_COUNT; j++) {
@@ -995,7 +1001,7 @@ ANSI::Settings WormBody::wormBodyStyle = ANSI::Settings(
 );
 
 // Worm::Worm() : Entity('H', {0, 0}, wormHeadStyle, Type::WORM_BODY) {}
-Worm::Worm(sista::Coordinates coordinates) : Entity('H', coordinates, wormHeadStyle, Type::WORM_HEAD), hp(WORM_HEALTH_POINTS) {
+Worm::Worm(sista::Coordinates coordinates) : Entity('H', coordinates, wormHeadStyle, Type::WORM_HEAD), hp(WORM_HEALTH_POINTS), collided(false) {
     direction = (Direction)(rand() % 4);
     Worm::worms.push_back(this);
 }
@@ -1061,6 +1067,9 @@ void Worm::move() {
                 this->turn(((Direction[]){Direction::LEFT, Direction::RIGHT})[rand() % 2]);
                 break;
             case Type::WORM_HEAD:
+                if (((Worm*)entity)->hp <= 1) {
+                    ((Worm*)entity)->collided = true;
+                }
                 ((Worm*)entity)->getHit();
             case Type::WORM_BODY: case Type::PORTAL:
                 this->turn(((Direction[]){Direction::LEFT, Direction::RIGHT})[rand() % 2]);
@@ -1078,14 +1087,14 @@ void Worm::turn(Direction direction_) {
 }
 void Worm::getHit() {
     if (--hp <= 0) {
+        if (collided) return;
         this->die();
     }
 }
 void Worm::die() {
     while (!body.empty()) {
         WormBody* tail = body.front();
-        body.erase(body.begin());
-        tail->die();
+        tail->die(); // Self deletes from the body too
     }
     Worm::worms.erase(std::find(Worm::worms.begin(), Worm::worms.end(), this));
     field->erasePawn(this);
