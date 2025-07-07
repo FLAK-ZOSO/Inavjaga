@@ -27,7 +27,7 @@
 
 // Costs
 #define COST_OF_MINE {1,3,0} // The cost of building a mine in the format {clay, bullets, meat}
-#define MEAT_DURATION_PERIOD 200 // Every how many frames the player eats a unit of meat
+#define MEAT_DURATION_PERIOD 50 // Every how many frames the player eats a unit of meat
 
 // Colors
 #define RGB_BLACK ANSI::RGBColor(0,0,0)
@@ -45,17 +45,18 @@
 #define DAMAGED_WALLS_COUNT 5
 #define MINE_EXPLOSION_IN_FRAME_PROBABILITY 0.10
 #define DUMB_MOVE_PROBABILITY 0.25
-#define ARCHER_SPAWNING_PROBABILITY 0.01
+#define ARCHER_SPAWNING_PROBABILITY 0.02
 #define ARCHER_MOVING_PROBABILITY 0.33
 #define ARCHER_SHOOTING_PROBABILITY 0.05
 #define WORM_TURNING_PROBABILITY 0.10
-#define WORM_SPAWNING_PROBABILITY 0.001
+#define WORM_SPAWNING_PROBABILITY 0.002
 #define WORM_EATING_ARCHER_PROBABILITY 0.1
+#define WORM_EATING_TAIL_PROBABILITY 0.2
 #define CLAY_RELEASE_PROBABILITY 0.01
 
 // Spawn settings
 #define INITIAL_ARCHERS 6
-#define INITIAL_WORMS 2
+#define INITIAL_WORMS 1
 
 // Worm
 #define WORM_LENGTH 7
