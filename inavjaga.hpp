@@ -204,6 +204,7 @@ public:
     static std::vector<Worm*> worms;
     static std::bernoulli_distribution turning;
     static std::bernoulli_distribution spawning;
+    static std::bernoulli_distribution eatingArcher;
     static std::bernoulli_distribution clayRelease;
     std::vector<WormBody*> body;
     Direction direction;

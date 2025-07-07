@@ -1074,6 +1074,11 @@ void Worm::move() {
             case Type::WORM_BODY: case Type::PORTAL:
                 this->turn(((Direction[]){Direction::LEFT, Direction::RIGHT})[rand() % 2]);
                 break;
+            case Type::ARCHER:
+                if (!eatingArcher(rng)) {
+                    this->turn(((Direction[]){Direction::LEFT, Direction::RIGHT})[rand() % 2]);
+                    break;
+                }
             default:
                 entity->remove();
         }
@@ -1112,6 +1117,7 @@ void Worm::remove() {
 }
 std::bernoulli_distribution Worm::turning(WORM_TURNING_PROBABILITY);
 std::bernoulli_distribution Worm::spawning(WORM_SPAWNING_PROBABILITY);
+std::bernoulli_distribution Worm::eatingArcher(WORM_EATING_ARCHER_PROBABILITY);
 std::bernoulli_distribution Worm::clayRelease(CLAY_RELEASE_PROBABILITY);
 ANSI::Settings Worm::wormHeadStyle = ANSI::Settings(
     ANSI::ForegroundColor::F_GREEN,
