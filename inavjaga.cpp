@@ -119,8 +119,7 @@ int main(int argc, char* argv[]) {
             if (worm == nullptr) continue;
             if (worm->collided) continue;
             if (Worm::turning(rng)) {
-                // TODO: proper turning intelligence
-                worm->turn(Direction::LEFT);
+                worm->turn();
             }
             worm->move();
         }
@@ -1107,6 +1106,14 @@ void Worm::move() {
                 entity->remove();
         }
     }
+}
+void Worm::turn() {
+    if (dumbMoveDistribution(rng)) {
+        this->turn(((Direction[]){Direction::LEFT, Direction::RIGHT})[rand() % 2]);
+        return;
+    }
+    // TODO: proper turning intelligence
+    this->turn(((Direction[]){Direction::LEFT, Direction::RIGHT})[rand() % 2]);
 }
 void Worm::turn(Direction direction_) {
     if (direction_ == Direction::LEFT)

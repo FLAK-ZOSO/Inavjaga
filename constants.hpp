@@ -1,5 +1,5 @@
-#define VERSION "0.1.0"
-#define DATE "2025-07-05"
+#define VERSION "0.2.0"
+#define DATE "2025-07-07"
 
 #define DEBUG 0
 
