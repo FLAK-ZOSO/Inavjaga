@@ -1105,6 +1105,9 @@ void Worm::move() {
                     this->turn(options[rand() % 2]);
                     break;
                 }
+            case Type::MINE:
+                ((Mine*)entity)->trigger();
+                break;
             default:
                 entity->remove();
         }
