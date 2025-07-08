@@ -933,6 +933,7 @@ bool Archer::move(Direction direction) {
                 return false;
         }
     }
+    return false;
 }
 void Archer::shoot() {
     if (dumbMoveDistribution(rng)) {
@@ -1003,6 +1004,7 @@ bool Archer::shoot(Direction direction) {
         }
         return false;
     }
+    return false;
 }
 void Archer::die() {
     Archer::archers.erase(std::find(Archer::archers.begin(), Archer::archers.end(), this));
