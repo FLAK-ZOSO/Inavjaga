@@ -35,6 +35,8 @@ const Inventory INITIAL_INVENTORY {
 std::mutex streamMutex;
 bool speedup = false;
 bool pause_ = false;
+int lastDeathFrame = 0;
+bool dead = false;
 bool end = false;
 
 
@@ -50,7 +52,7 @@ int main(int argc, char* argv[]) {
     sista::SwappableField field_(WIDTH, HEIGHT);
     field = &field_;
     generateTunnels();
-    Player::player = new Player({0, WIDTH - 1});
+    Player::player = new Player(SPAWN_COORDINATES);
     Player::player->mode = Player::Mode::BULLET;
     field->addPawn(Player::player);
     spawnInitialEnemies();
@@ -61,11 +63,22 @@ int main(int argc, char* argv[]) {
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
             if (!pause_) {
                 std::lock_guard<std::mutex> lock(streamMutex); // Lock stays until scope ends
-                sista::clearScreen(true);
-                field->print(border);
-                printKeys();
+                reprint();
             } // Reprint after unpausing, just as a tool for allowing resizing
             if (end) break;
+        }
+        if (dead) {
+            dead = false;
+            lastDeathFrame = i;
+            sista::Coordinates respawnCoordinates = RESPAWN_COORDINATES;
+            field->movePawn(Player::player, respawnCoordinates);
+            Player::player->inventory.clay = 0;
+            Player::player->inventory.bullets = 0;
+        }
+        if (lastDeathFrame && i - lastDeathFrame == 20) {
+            // After 20 frames it deletes the death reason
+            std::lock_guard<std::mutex> lock(streamMutex); // Lock stays until scope ends
+            reprint();
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(
             (int)(FRAME_DURATION / (std::pow(1 + (int)speedup, 2)))
@@ -141,6 +154,12 @@ int main(int argc, char* argv[]) {
         }
         spawnEnemies();
         printSideInstructions(i);
+        // Check for negative amount of meat
+        if (Player::player->inventory.meat < 0) {
+            printEndInformation(EndReason::STARVED);
+            dead = true;
+            end = true;
+        }
         if (endConditions()) {
             end = true;
         }
@@ -152,7 +171,7 @@ int main(int argc, char* argv[]) {
         #endif
     }
 
-    end = true;
+    end = true; // Needed to ensure the input function returns and the thread th gets joined
     deallocateAll();
     th.join();
     field->clear();
@@ -184,11 +203,6 @@ bool endConditions() {
                 }
             }
         }
-    }
-    // Check for negative amount of meat
-    if (Player::player->inventory.meat < 0) {
-        printEndInformation(EndReason::STARVED);
-        return true;
     }
     return false;
 }
@@ -259,6 +273,11 @@ void printKeys() {
     std::cout << "Pause or resume: \x1b[35m.\x1b[37m | \x1b[35mp\x1b[37m\n";
     cursor.set(24, WIDTH + 10);
     std::cout << "Quit: \x1b[35mQ\x1b[37m\n";
+}
+void reprint() {
+    sista::clearScreen(true);
+    field->print(border);
+    printKeys();
 }
 
 void generateTunnels() {
@@ -708,7 +727,7 @@ void EnemyBullet::move() {
             }
             case Type::PLAYER:
                 printEndInformation(EndReason::SHOT);
-                end = true;
+                dead = true;
                 break;
             default:
                 break;
@@ -999,7 +1018,7 @@ bool Archer::shoot(Direction direction) {
                 break;
             case Type::PLAYER: // Counts as a dagger hit
                 printEndInformation(EndReason::STABBED);
-                end = true;
+                dead = true;
                 break;
             case Type::MINE:
                 ((Mine*)entity)->trigger();
@@ -1118,7 +1137,7 @@ void Worm::move() {
         switch (entity->type) {
             case Type::PLAYER:
                 printEndInformation(EndReason::EATEN);
-                end = true;
+                dead = true;
                 break;
             case Type::WALL:
                 if (((Wall*)entity)->strength > 1)

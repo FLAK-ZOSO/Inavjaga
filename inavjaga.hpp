@@ -37,6 +37,7 @@ void spawnEnemies();
 bool endConditions();
 void printSideInstructions(int);
 void printKeys();
+void reprint();
 void input();
 void act(char);
 void printEndInformation(EndReason);
