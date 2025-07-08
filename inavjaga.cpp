@@ -157,6 +157,7 @@ int main(int argc, char* argv[]) {
     th.join();
     field->clear();
     cursor.set(72, 0); // Move the cursor to the bottom of the screen, so the terminal is not left in a weird state
+    std::this_thread::sleep_for(std::chrono::seconds(1)); // Give the time to see the final screen
     flushInput();
     #if __linux__
         getch();

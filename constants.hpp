@@ -4,7 +4,7 @@
 #define DEBUG 0
 
 // Field size and shape
-#define WIDTH 50
+#define WIDTH 70
 #define HEIGHT 30
 #define TUNNEL_UNIT 3
 #define PORTALS_PER_LINE 2
