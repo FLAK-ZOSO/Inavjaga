@@ -29,6 +29,7 @@ extern std::mt19937 rng;
 extern std::map<int, std::vector<int>> passages; // {y, {x1, x2, x3...}}
 extern std::map<int, std::vector<int>> breaches; // {y, {x1, x2, x3...}}
 extern std::bernoulli_distribution dumbMoveDistribution;
+enum EndReason {STARVED, SHOT, EATEN, STABBED, TOUCHDOWN, QUIT};
 
 void generateTunnels();
 void spawnInitialEnemies();
@@ -38,6 +39,7 @@ void printSideInstructions(int);
 void printKeys();
 void input();
 void act(char);
+void printEndInformation(EndReason);
 void deallocateAll();
 
 

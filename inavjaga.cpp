@@ -177,6 +177,7 @@ bool endConditions() {
             if (field->isOccupied(row, column)) {
                 if (((Entity*)field->getPawn(row, column))->type == Type::ARCHER
                     || ((Entity*)field->getPawn(row, column))->type == Type::WORM_HEAD) {
+                    printEndInformation(EndReason::TOUCHDOWN);
                     return true;
                 }
             }
@@ -184,6 +185,7 @@ bool endConditions() {
     }
     // Check for negative amount of meat
     if (Player::player->inventory.meat < 0) {
+        printEndInformation(EndReason::STARVED);
         return true;
     }
     return false;
@@ -431,11 +433,49 @@ void act(char input_) {
             pause_ = !pause_;
             break;
         case 'Q': /* case 'q': */
+            printEndInformation(EndReason::QUIT);
             end = true;
             return;
         default:
             break;
     }
+}
+
+void printEndInformation(EndReason endReason) {
+    cursor.set(HEIGHT, WIDTH + 10);
+    
+    ANSI::reset();
+    ANSI::setAttribute(ANSI::Attribute::BLINK);
+    switch (endReason) {
+        case EndReason::EATEN:
+            std::cout << "You have been eaten by a ";
+            Worm::wormHeadStyle.apply();
+            std::cout << "WORM";
+            break;
+        case EndReason::QUIT:
+            std::cout << "You quit the game with the capital 'Q' key";
+            break;
+        case EndReason::SHOT:
+            std::cout << "You have been shot with a ";
+            EnemyBullet::enemyBulletStyle.apply();
+            std::cout << "BULLET";
+            break;
+        case EndReason::STABBED:
+            std::cout << "You have been stabbed by an ";
+            Archer::archerStyle.apply();
+            std::cout << "ARCHER";
+            break;
+        case EndReason::STARVED:
+            std::cout << "You have starved because you ran out of meat";
+            break;
+        case EndReason::TOUCHDOWN:
+            std::cout << "Some enemy reached the top right area that you were supposed to defend";
+            break;
+        default:
+            std::cout << "Something unexpected went wrong internally and sadly your game was terminated";
+            break;
+    }
+    std::cout << std::flush;
 }
 
 void deallocateAll() {
@@ -662,6 +702,7 @@ void EnemyBullet::move() {
                 break;
             }
             case Type::PLAYER:
+                printEndInformation(EndReason::SHOT);
                 end = true;
                 break;
             default:
@@ -951,6 +992,7 @@ bool Archer::shoot(Direction direction) {
                 ((Wall*)entity)->getHit();
                 break;
             case Type::PLAYER: // Counts as a dagger hit
+                printEndInformation(EndReason::STABBED);
                 end = true;
                 break;
             case Type::MINE:
@@ -1001,11 +1043,11 @@ void WormBody::remove() {
     field->erasePawn(this);
     delete this;
 }
-ANSI::Settings WormBody::wormBodyStyle = ANSI::Settings(
+ANSI::Settings WormBody::wormBodyStyle = {
     ANSI::ForegroundColor::F_GREEN,
     ANSI::BackgroundColor::B_BLACK,
     ANSI::Attribute::BRIGHT
-);
+};
 
 Worm::Worm(sista::Coordinates coordinates) : Entity('H', coordinates, wormHeadStyle, Type::WORM_HEAD), hp(WORM_HEALTH_POINTS), collided(false) {
     direction = (Direction)(rand() % 4);
@@ -1068,6 +1110,7 @@ void Worm::move() {
         Entity* entity = (Entity*)field->getPawn(next);
         switch (entity->type) {
             case Type::PLAYER:
+                printEndInformation(EndReason::EATEN);
                 end = true;
                 break;
             case Type::WALL:
@@ -1148,11 +1191,11 @@ std::bernoulli_distribution Worm::spawning(WORM_SPAWNING_PROBABILITY);
 std::bernoulli_distribution Worm::eatingTail(WORM_EATING_TAIL_PROBABILITY);
 std::bernoulli_distribution Worm::eatingArcher(WORM_EATING_ARCHER_PROBABILITY);
 std::bernoulli_distribution Worm::clayRelease(CLAY_RELEASE_PROBABILITY);
-ANSI::Settings Worm::wormHeadStyle = ANSI::Settings(
+ANSI::Settings Worm::wormHeadStyle = {
     ANSI::ForegroundColor::F_GREEN,
     ANSI::BackgroundColor::B_BLACK,
     ANSI::Attribute::RAPID_BLINK
-);
+};
 
 
 Player::Player(sista::Coordinates coordinates) : Entity('$', coordinates, playerStyle, Type::PLAYER), mode(Player::Mode::COLLECT), inventory(INITIAL_INVENTORY) {}
