@@ -1259,15 +1259,20 @@ void Player::shoot(Direction direction) {
     switch (this->mode) {
         // TODO: add modes
         case Mode::BULLET:
-        if (--inventory.bullets >= 0) {
-            field->addPrintPawn(new Bullet(target, direction));
-        }
-        inventory.bullets = std::max(inventory.bullets, (short)0);
-        break;
+            if (--inventory.bullets >= 0) {
+                field->addPrintPawn(new Bullet(target, direction));
+            }
+            inventory.bullets = std::max(inventory.bullets, (short)0);
+            break;
         case Mode::DUMPCHEST:
-            // There is a check missing here... on purpose ;)
-            field->addPrintPawn(new Chest(target, this->inventory));
-            this->inventory = {0, 0, 0};
+            if (inventory.clay > 0 || inventory.bullets > 0) {
+                field->addPrintPawn(new Chest(target, {
+                    this->inventory.clay,
+                    this->inventory.bullets,
+                    0 // Meat cannot be deposited
+                }));
+                this->inventory = {0, 0, this->inventory.meat};
+            }
             break;
         case Mode::MINE:
             if (this->inventory.containsAtLeast(COST_OF_MINE)) {
