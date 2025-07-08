@@ -60,6 +60,7 @@ int main(int argc, char* argv[]) {
         while (pause_) {
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
             if (!pause_) {
+                std::lock_guard<std::mutex> lock(streamMutex); // Lock stays until scope ends
                 sista::clearScreen(true);
                 field->print(border);
                 printKeys();
