@@ -468,12 +468,10 @@ void deallocateAll() {
     }
 }
 
-// Entity::Entity() : sista::Pawn(' ', sista::Coordinates(0, 0), Player::playerStyle), type(Type::PLAYER) {}
 Entity::Entity(char symbol, sista::Coordinates coordinates, ANSI::Settings& settings, Type type) :
     sista::Pawn(symbol, coordinates, settings), type(type) {}
 
 
-// Wall::Wall() : Entity('#', {0, 0}, wallStyle, Type::WALL) {}
 Wall::Wall(sista::Coordinates coordinates, short int strength) :
     Entity('#', coordinates, wallStyle, Type::WALL), strength(strength) {
     Wall::walls.push_back(this);
@@ -553,7 +551,6 @@ ANSI::Settings Wall::wallStyle = {
     ANSI::Attribute::BRIGHT
 };
 
-// Bullet::Bullet() : Entity('>', {0, 0}, bulletStyle, Type::BULLET), direction(Direction::RIGHT), collided(false) {}
 Bullet::Bullet(sista::Coordinates coordinates, Direction direction) :
     Entity(directionSymbol[direction], coordinates, bulletStyle, Type::BULLET), direction(direction), collided(false) {
     Bullet::bullets.push_back(this);
@@ -617,7 +614,6 @@ ANSI::Settings Bullet::bulletStyle = {
     ANSI::Attribute::BRIGHT
 };
 
-// EnemyBullet::EnemyBullet() : Entity('>', {0, 0}, enemyBulletStyle, Type::ENEMY_BULLET), direction(Direction::RIGHT), collided(false) {}
 EnemyBullet::EnemyBullet(sista::Coordinates coordinates, Direction direction) :
     Entity(directionSymbol[direction], coordinates, enemyBulletStyle, Type::ENEMY_BULLET), direction(direction), collided(false) {
     EnemyBullet::enemyBullets.push_back(this);
@@ -680,7 +676,6 @@ ANSI::Settings EnemyBullet::enemyBulletStyle = {
     ANSI::Attribute::BRIGHT
 };
 
-// Chest::Chest() : Entity('C', {0, 0}, chestStyle, Type::CHEST), inventory(INITIAL_INVENTORY) {}
 Chest::Chest(sista::Coordinates coordinates, Inventory inventory) : Entity('C', coordinates, chestStyle, Type::CHEST), inventory(inventory) {
     Chest::chests.push_back(this);
 }
@@ -695,7 +690,6 @@ ANSI::Settings Chest::chestStyle = {
     ANSI::Attribute::REVERSE
 };
 
-// Portal::Portal() : Entity('&', {0, 0}, portalStyle, Type::PORTAL) {}
 Portal::Portal(sista::Coordinates coordinates) : Entity('&', coordinates, portalStyle, Type::PORTAL) {
     Portal::portals.push_back(this);
 }
@@ -710,7 +704,6 @@ ANSI::Settings Portal::portalStyle = {
     ANSI::Attribute::FAINT
 };
 
-// Mine::Mine() : Entity('*', {0, 0}, mineStyle, Type::MINE), triggered(false) {}
 Mine::Mine(sista::Coordinates coordinates) : Entity('*', coordinates, mineStyle, Type::MINE), triggered(false) {
     Mine::mines.push_back(this);
 }
@@ -775,7 +768,6 @@ ANSI::Settings Mine::triggeredMineStyle = {
     ANSI::Attribute::BLINK
 };
 
-// Archer::Archer() : Entity('A', {0, 0}, archerStyle, Type::ARCHER) {}
 Archer::Archer(sista::Coordinates coordinates) : Entity('A', coordinates, archerStyle, Type::ARCHER) {
     Archer::archers.push_back(this);
 }
@@ -994,7 +986,6 @@ ANSI::Settings Archer::archerStyle = {
     ANSI::Attribute::STRIKETHROUGH
 };
 
-// WormBody::WormBody() : Entity('<', {0, 0}, wormBodyStyle, Type::WORM_BODY) {}
 WormBody::WormBody(sista::Coordinates coordinates, Direction direction) : Entity(directionSymbol[direction], coordinates, wormBodyStyle, Type::WORM_BODY) {
     WormBody::wormBodies.push_back(this);
 }
@@ -1016,7 +1007,6 @@ ANSI::Settings WormBody::wormBodyStyle = ANSI::Settings(
     ANSI::Attribute::BRIGHT
 );
 
-// Worm::Worm() : Entity('H', {0, 0}, wormHeadStyle, Type::WORM_BODY) {}
 Worm::Worm(sista::Coordinates coordinates) : Entity('H', coordinates, wormHeadStyle, Type::WORM_HEAD), hp(WORM_HEALTH_POINTS), collided(false) {
     direction = (Direction)(rand() % 4);
     Worm::worms.push_back(this);

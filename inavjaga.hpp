@@ -57,7 +57,6 @@ class Entity : public sista::Pawn {
 public:
     Type type;
 
-    Entity();
     Entity(char, sista::Coordinates, ANSI::Settings&, Type);
     virtual ~Entity() {}
     virtual void remove() = 0;
@@ -89,7 +88,6 @@ public:
     static std::bernoulli_distribution wearing;
     short int strength;
 
-    Wall();
     Wall(sista::Coordinates, short int);
     void remove() override;
 
@@ -103,7 +101,6 @@ public:
     Direction direction;
     bool collided = false;
 
-    Bullet();
     Bullet(sista::Coordinates, Direction);
     void remove() override;
 
@@ -117,7 +114,6 @@ public:
     Direction direction;
     bool collided = false;
 
-    EnemyBullet();
     EnemyBullet(sista::Coordinates, Direction);
     void remove() override;
 
@@ -130,7 +126,6 @@ public:
     static std::vector<Chest*> chests;
     Inventory inventory;
 
-    Chest();
     Chest(sista::Coordinates, Inventory);
     void remove() override;
 };
@@ -141,7 +136,6 @@ public:
     static std::vector<Portal*> portals;
     Portal* exit; // The matching portal
 
-    Portal();
     Portal(sista::Coordinates);
     Portal(sista::Coordinates, Portal*);
     void remove() override;
@@ -156,7 +150,6 @@ public:
     static std::uniform_int_distribution<int> mineDamage;
     bool triggered;
 
-    Mine();
     Mine(sista::Coordinates);
     void remove() override;
 
@@ -172,7 +165,6 @@ public:
     static std::bernoulli_distribution moving;
     static std::bernoulli_distribution spawning;
 
-    Archer();
     Archer(sista::Coordinates);
     void remove() override;
 
@@ -190,7 +182,6 @@ public:
     static std::vector<WormBody*> wormBodies;
     Worm* head;
 
-    WormBody();
     WormBody(sista::Coordinates, Direction);
     void remove() override;
 
@@ -213,7 +204,6 @@ public:
     bool collided;
     short int hp;
 
-    Worm();
     Worm(sista::Coordinates);
     Worm(sista::Coordinates, Direction);
     void remove() override;
