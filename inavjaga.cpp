@@ -260,7 +260,7 @@ void printKeys() {
 }
 
 void generateTunnels() {
-    std::uniform_int_distribution<int> distr(TUNNEL_UNIT * 2, WIDTH-(TUNNEL_UNIT * 2)); // Inclusive
+    std::uniform_int_distribution<int> distr(TUNNEL_UNIT * 2, WIDTH-(TUNNEL_UNIT * 2)-1); // Inclusive
     int portalCoordinate;
     for (int row=0; row<HEIGHT; row++) {
         if (row % (TUNNEL_UNIT * 3) == 0 && row + TUNNEL_UNIT * 3 < HEIGHT) {
@@ -450,6 +450,7 @@ void printEndInformation(EndReason endReason) {
         case EndReason::EATEN:
             std::cout << "You have been eaten by a ";
             Worm::wormHeadStyle.apply();
+            ANSI::setAttribute(ANSI::Attribute::BLINK);
             std::cout << "WORM";
             break;
         case EndReason::QUIT:
@@ -458,11 +459,13 @@ void printEndInformation(EndReason endReason) {
         case EndReason::SHOT:
             std::cout << "You have been shot with a ";
             EnemyBullet::enemyBulletStyle.apply();
+            ANSI::setAttribute(ANSI::Attribute::BLINK);
             std::cout << "BULLET";
             break;
         case EndReason::STABBED:
             std::cout << "You have been stabbed by an ";
             Archer::archerStyle.apply();
+            ANSI::setAttribute(ANSI::Attribute::BLINK);
             std::cout << "ARCHER";
             break;
         case EndReason::STARVED:
@@ -1046,7 +1049,7 @@ void WormBody::remove() {
     delete this;
 }
 ANSI::Settings WormBody::wormBodyStyle = {
-    ANSI::ForegroundColor::F_GREEN,
+    ANSI::RGBColor(50, 0xff, 150),
     ANSI::BackgroundColor::B_BLACK,
     ANSI::Attribute::BRIGHT
 };

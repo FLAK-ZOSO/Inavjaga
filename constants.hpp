@@ -1,16 +1,16 @@
-#define VERSION "0.2.1"
-#define DATE "2025-07-07"
+#define VERSION "0.2.2"
+#define DATE "2025-07-08"
 
 #define DEBUG 0
 
 // Field size and shape
-#define WIDTH 70
+#define WIDTH 50
 #define HEIGHT 30
 #define TUNNEL_UNIT 3
 #define PORTALS_PER_LINE 2
 
 // Game speed
-#define FRAME_DURATION 100
+#define FRAME_DURATION 90
 #define BULLET_SPEED 1
 
 // Inventory
