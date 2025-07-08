@@ -1241,12 +1241,23 @@ void Player::shoot(Direction direction) {
         
         Entity* entity = (Entity*)field->getPawn(target);
         switch (this->mode) {
-            // TODO: add modes
             case Mode::COLLECT: {
                 if (entity->type == Type::CHEST) {
                     Chest* chest = (Chest*)entity;
                     this->inventory += chest->inventory;
                     chest->remove();
+                }
+                break;
+            }
+            case Mode::DUMPCHEST: {
+                if (entity->type == Type::CHEST) {
+                    Chest* chest = (Chest*)entity;
+                    chest->inventory += {
+                        this->inventory.clay,
+                        this->inventory.bullets,
+                        0 // Meat cannot be deposited
+                    };
+                    this->inventory = {0, 0, this->inventory.meat};
                 }
                 break;
             }
@@ -1257,7 +1268,6 @@ void Player::shoot(Direction direction) {
     }
     
     switch (this->mode) {
-        // TODO: add modes
         case Mode::BULLET:
             if (--inventory.bullets >= 0) {
                 field->addPrintPawn(new Bullet(target, direction));

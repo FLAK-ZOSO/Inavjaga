@@ -1,4 +1,4 @@
-#define VERSION "0.2.2"
+#define VERSION "0.2.3"
 #define DATE "2025-07-08"
 
 #define DEBUG 0
