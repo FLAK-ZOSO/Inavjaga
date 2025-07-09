@@ -35,9 +35,22 @@ jobs:
             echo "exe_path=$(find . -type f -perm /111 | head -n 1)" >> $GITHUB_OUTPUT
           fi
 
+      - name: Rename executable (Linux/macOS)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          mv "${{ steps.find-exe.outputs.exe_path }}" "inavjaga-${{ runner.os }}"
+
+      - name: Rename executable (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Move-Item -Path "${{ steps.find-exe.outputs.exe_path }}" -Destination "inavjaga-${{ runner.os }}.exe"
+
       - name: Upload Release Asset
         uses: softprops/action-gh-release@v2
         with:
-          files: ${{ steps.find-exe.outputs.exe_path }}
+          files: |
+            inavjaga-${{ runner.os }}*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
