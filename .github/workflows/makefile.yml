@@ -1,18 +1,38 @@
-name: Makefile CI
+name: Build and Upload Executable
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ main ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ main ]
 
 jobs:
   build:
-
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
 
     steps:
-    - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Build Inävjaga
-      run: make
+      - name: Run make
+        run: make
+
+      - name: Find Executable
+        id: find-exe
+        shell: bash
+        run: |
+          # Adjust to match your target binary name if needed
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            echo "exe_path=$(find . -type f -name '*.exe' | head -n 1)" >> $GITHUB_OUTPUT
+          else
+            echo "exe_path=$(find . -type f -perm /111 | head -n 1)" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: executable-${{ matrix.os }}
+          path: ${{ steps.find-exe.outputs.exe_path }}
