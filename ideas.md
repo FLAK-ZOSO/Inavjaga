@@ -8,4 +8,4 @@
 - [x] ...but for a worm it's sufficient for the head to pass nearby
 - [x] loss condition: an enemy reaching top (TUNNEL_UNIT * 2)^2 square
 - [x] enemies dieing leave resources in the form of chests that replace them
-- [ ] provide an option to drop the inventory in a chest on death
+- [x] provide an option to drop the inventory in a chest on death

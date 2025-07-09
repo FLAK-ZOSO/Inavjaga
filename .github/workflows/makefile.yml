@@ -39,6 +39,7 @@ jobs:
 
       - name: Set artifact name
         id: artifact-name
+        shell: bash
         run: |
           if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
             echo "name=linux" >> $GITHUB_OUTPUT

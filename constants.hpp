@@ -14,6 +14,7 @@
 #define BULLET_SPEED 1
 
 // Inventory
+#define DROP_INVENTORY_ON_DEATH 1
 #define INITIAL_CLAY 5
 #define INITIAL_BULLETS 10
 #define INITIAL_MEAT 10

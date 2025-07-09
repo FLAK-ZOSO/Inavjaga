@@ -70,8 +70,16 @@ int main(int argc, char* argv[]) {
         if (dead) {
             dead = false;
             lastDeathFrame = i;
+            sista::Coordinates deathCoordinates = Player::player->getCoordinates();
             sista::Coordinates respawnCoordinates = RESPAWN_COORDINATES;
             field->movePawn(Player::player, respawnCoordinates);
+            #if DROP_INVENTORY_ON_DEATH
+            field->addPrintPawn(new Chest(deathCoordinates, {
+                Player::player->inventory.clay,
+                Player::player->inventory.bullets,
+                0
+            }));
+            #endif
             Player::player->inventory.clay = 0;
             Player::player->inventory.bullets = 0;
         }
@@ -1156,6 +1164,7 @@ void Worm::move() {
         Entity* entity = (Entity*)field->getPawn(next);
         switch (entity->type) {
             case Type::PLAYER:
+                this->turn(options[rand() % 2]);
                 printEndInformation(EndReason::EATEN);
                 dead = true;
                 break;
