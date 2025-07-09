@@ -1,10 +1,11 @@
-- [ ] the field goes wearing out with time passing
-- [ ] when you kill a worm with an headshot, the rest of the body becomes bullets that you can harvest
-- [ ] the worms leave clay around
-- [ ] you need to eat meat not to starve
-- [ ] archers move through the wall breaches...
-- [ ] ...while worms follow the path
-- [ ] mines get triggered by an archer stepping on it...
-- [ ] ...but for a worm it's sufficient for the head to pass nearby
-- [ ] loss condition: an enemy reaching top (TUNNEL_UNIT * 2)^2 square
-- [ ] enemies dieing leave resources in the form of chests that replace them
+- [x] the field goes wearing out with time passing
+- [x] when you kill a worm with an headshot, the rest of the body becomes bullets that you can harvest
+- [x] the worms leave clay around
+- [x] you need to eat meat not to starve
+- [x] archers move through the wall breaches...
+- [x] ...while worms turn randomly
+- [x] mines get triggered by an archer stepping on it...
+- [x] ...but for a worm it's sufficient for the head to pass nearby
+- [x] loss condition: an enemy reaching top (TUNNEL_UNIT * 2)^2 square
+- [x] enemies dieing leave resources in the form of chests that replace them
+- [ ] provide an option to drop the inventory in a chest on death

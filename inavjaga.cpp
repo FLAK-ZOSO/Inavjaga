@@ -142,6 +142,26 @@ int main(int argc, char* argv[]) {
                 worm->die();
             }
         }
+        for (unsigned j = 0; j < Mine::mines.size(); j++) {
+            if (j >= Mine::mines.size()) break;
+            Mine* mine = Mine::mines[j];
+            if (!mine->triggered) {
+                for (int k=-MINE_SENSITIVITY_RADIUS; k<=MINE_SENSITIVITY_RADIUS; k++) {
+                    for (int h=-MINE_SENSITIVITY_RADIUS; h<=MINE_SENSITIVITY_RADIUS; h++) {
+                        if (k == 0 && h == 0) continue;
+                        sista::Coordinates target = mine->getCoordinates() + sista::Coordinates(k, h);
+                        if (field->isOutOfBounds(target)) {
+                            continue;
+                        } else if (field->isOccupied(target)) {
+                            Entity* entity = (Entity*)field->getPawn(target);
+                            if (entity->type == Type::WORM_HEAD) {
+                                mine->trigger();
+                            }
+                        }
+                    }
+                }
+            }
+        }
         if (!Wall::walls.empty() && Wall::wearing(rng)) {
             for (int j = 0; j < DAMAGED_WALLS_COUNT; j++) {
                 if (Wall::walls.empty()) break;
@@ -785,8 +805,8 @@ void Mine::trigger() {
     field->rePrintPawn(this);
 }
 void Mine::explode() {
-    for (int j=-2; j<=2; j++) {
-        for (int i=-2; i<=2; i++) {
+    for (int j=-MINE_DAMAGE_RADIUS; j<=MINE_DAMAGE_RADIUS; j++) {
+        for (int i=-MINE_DAMAGE_RADIUS; i<=MINE_DAMAGE_RADIUS; i++) {
             if (i == 0 && j == 0) continue;
             sista::Coordinates target = this->coordinates + sista::Coordinates(j, i);
             if (field->isOutOfBounds(target)) continue;
@@ -1167,6 +1187,7 @@ void Worm::move() {
                 break;
             case Type::MINE:
                 ((Mine*)entity)->trigger();
+                this->turn(options[rand() % 2]);
                 break;
             default:
                 entity->remove();
