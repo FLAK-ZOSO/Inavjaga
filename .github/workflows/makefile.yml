@@ -24,9 +24,10 @@ jobs:
         id: find-exe
         shell: bash
         run: |
-          # Adjust to match your target binary name if needed
           if [[ "${{ runner.os }}" == "Windows" ]]; then
             echo "exe_path=$(find . -type f -name '*.exe' | head -n 1)" >> $GITHUB_OUTPUT
+          elif [[ "${{ runner.os }}" == "macOS" ]]; then
+            echo "exe_path=$(find . -type f -perm +111 | head -n 1)" >> $GITHUB_OUTPUT
           else
             echo "exe_path=$(find . -type f -perm /111 | head -n 1)" >> $GITHUB_OUTPUT
           fi
