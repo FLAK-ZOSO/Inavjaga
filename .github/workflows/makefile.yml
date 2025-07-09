@@ -3,6 +3,11 @@ name: Build and Upload Executable
 on:
   push:
     branches: [ main ]
+    paths:
+      - 'Makefile'
+      - 'include/**'
+      - '*.cpp'
+      - '*.hpp'
   pull_request:
     branches: [ main ]
 
