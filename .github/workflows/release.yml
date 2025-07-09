@@ -1,0 +1,39 @@
+name: Release Executable
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run make
+        run: make
+
+      - name: Find Executable
+        id: find-exe
+        shell: bash
+        run: |
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            echo "exe_path=$(find . -type f -name '*.exe' | head -n 1)" >> $GITHUB_OUTPUT
+          elif [[ "${{ runner.os }}" == "macOS" ]]; then
+            echo "exe_path=$(find . -type f -perm +111 | head -n 1)" >> $GITHUB_OUTPUT
+          else
+            echo "exe_path=$(find . -type f -perm /111 | head -n 1)" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Upload Release Asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ steps.find-exe.outputs.exe_path }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
