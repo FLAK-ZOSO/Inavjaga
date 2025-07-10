@@ -1,7 +1,10 @@
-#define VERSION "0.3.0"
-#define DATE "2025-07-08"
+#define VERSION "0.4.0"
+#define DATE "2025-07-10"
+#define AUTHOR "FLAK-ZOSO"
 
 #define DEBUG 0
+#define INTRO 1
+#define TUTORIAL 1
 
 // Field size and shape
 #define WIDTH 70

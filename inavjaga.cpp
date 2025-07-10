@@ -5,7 +5,6 @@
 #include <chrono>
 #include <mutex>
 #include <stack>
-#include <set>
 
 Player* Player::player;
 std::vector<Wall*> Wall::walls;
@@ -55,6 +54,12 @@ int main(int argc, char* argv[]) {
     Player::player = new Player(SPAWN_COORDINATES);
     Player::player->mode = Player::Mode::BULLET;
     field->addPawn(Player::player);
+    #if INTRO
+    intro();
+    #endif
+    #if TUTORIAL
+    tutorial();
+    #endif
     spawnInitialEnemies();
     field->print(border);
     std::thread th(input);
@@ -233,6 +238,89 @@ bool endConditions() {
         }
     }
     return false;
+}
+
+void intro() {
+    std::cout << "Make sure that the following hash signs fit the best in a line in your terminal.\n";
+    std::cout << "Use ctrl+<minus> and ctrl+<plus> or ctrl+<mouse-scroll> to resize your terminal.\n";
+    std::cout << "Also, maximize your terminal window for an optimal view on the field.\n";
+    field->print(border);
+    ANSI::reset();
+    cursor.set(8, (unsigned short)(WIDTH / 2.1));
+    std::cout << "Inävjaga";
+    cursor.set(TUNNEL_UNIT * 3 + 7, TUNNEL_UNIT * 2 + 2);
+    Player::playerStyle.apply();
+    std::cout << "Inävjaga v" << VERSION;
+    cursor.set(TUNNEL_UNIT * 3 + 7, (unsigned short)(WIDTH / 2.6));
+    ANSI::reset();
+    ANSI::setAttribute(ANSI::Attribute::ITALIC);
+    ANSI::setAttribute(ANSI::Attribute::FAINT);
+    std::cout << " originally by ";
+    ANSI::reset();
+    Player::playerStyle.apply();
+    std::cout << AUTHOR << "     " << DATE;
+    ANSI::reset();
+    cursor.set(TUNNEL_UNIT * 3 + 9, (unsigned short)(WIDTH / 3.5));
+    ANSI::setAttribute(ANSI::Attribute::UNDERSCORE);
+    std::cout << "https://github.com/FLAK-ZOSO/Inavjaga";
+    std::cout << std::flush;
+    
+    #if defined(_WIN32) or defined(__linux__)
+        getch();
+    #elif __APPLE__
+        getchar();
+    #endif
+
+    sista::clearScreen(true);
+}
+
+void tutorial() {
+    field->print(border);
+    printSideInstructions(0);
+
+    cursor.set(TUNNEL_UNIT * 3 + 3, 4);
+    ANSI::reset();
+    std::cout << "If you want to skip the tutorial, click 'n' at any point";
+    cursor.set(TUNNEL_UNIT * 3 + 3 + 1, 4);
+    std::cout << "To disable it, set TUTORIAL to 0 in constants.hpp and recompile";
+
+    cursor.set(TUNNEL_UNIT * 4 + 3, 4);
+    ANSI::reset();
+    std::cout << "You are the ";
+    Player::playerStyle.apply();
+    std::cout << "$ player";
+    ANSI::reset();
+    std::cout << ", try moving around a bit" << std::endl;
+
+    char input_;
+    flushInput();
+    for (int i = 0; i < 5; i++) {
+        #if defined(_WIN32) or defined(__linux__)
+            input_ = getch();
+        #elif __APPLE__
+            input_ = getchar();
+        #endif
+        if (movementKeys.find(input_) != movementKeys.end()) {
+            act(input_);
+        } else if (input_ == 'n') {
+            flushInput();
+            sista::clearScreen(true);
+            return;
+        }
+        std::cout << std::flush;
+    }
+
+    cursor.set(TUNNEL_UNIT * 4 + 3 + 2, 4);
+    ANSI::reset();
+    std::cout << "You are the ";
+    Player::playerStyle.apply();
+    std::cout << "$ player";
+    ANSI::reset();
+    std::cout << ", try moving around a bit" << std::endl;
+
+    flushInput();
+
+    sista::clearScreen(true);
 }
 
 void printSideInstructions(int i) {
@@ -1360,6 +1448,9 @@ std::unordered_map<Direction, char> directionSymbol = {
     {Direction::RIGHT, '>'},
     {Direction::DOWN, 'v'},
     {Direction::LEFT, '<'}
+};
+std::set<char> movementKeys = {
+    'w', 'W', 'd', 'D', 's', 'S', 'a', 'A'
 };
 std::mt19937 rng(std::chrono::system_clock::now().time_since_epoch().count());
 std::map<int, std::vector<int>> passages; // Lateral passages, "main tunnel" tresholds

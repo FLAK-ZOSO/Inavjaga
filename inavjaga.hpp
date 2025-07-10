@@ -4,6 +4,7 @@
 #include <vector>
 #include <random>
 #include <map>
+#include <set>
 
 enum Type {
     PLAYER,
@@ -25,6 +26,7 @@ enum Type {
 enum Direction {UP, RIGHT, DOWN, LEFT};
 extern std::unordered_map<Direction, sista::Coordinates> directionMap;
 extern std::unordered_map<Direction, char> directionSymbol;
+extern std::set<char> movementKeys;
 extern std::mt19937 rng;
 extern std::map<int, std::vector<int>> passages; // {y, {x1, x2, x3...}}
 extern std::map<int, std::vector<int>> breaches; // {y, {x1, x2, x3...}}
@@ -32,6 +34,8 @@ extern std::bernoulli_distribution dumbMoveDistribution;
 enum EndReason {STARVED, SHOT, EATEN, STABBED, TOUCHDOWN, QUIT};
 
 void generateTunnels();
+void intro();
+void tutorial();
 void spawnInitialEnemies();
 void spawnEnemies();
 bool endConditions();
