@@ -326,6 +326,8 @@ void tutorial() {
         #elif __APPLE__
             input_ = getchar();
         #endif
+        if (movementKeys.find(input_) != movementKeys.end())
+            continue;
         if (input_ == 'n') {
             flushInput();
             sista::clearScreen(true);
