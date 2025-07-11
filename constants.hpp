@@ -13,7 +13,7 @@
 #define PORTALS_PER_LINE 2
 
 // Game speed
-#define FRAME_DURATION 90
+#define FRAME_DURATION 90 // Expressed in milliseconds
 #define BULLET_SPEED 1
 
 // Inventory

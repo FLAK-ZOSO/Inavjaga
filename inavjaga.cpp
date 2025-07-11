@@ -278,13 +278,13 @@ void tutorial() {
     field->print(border);
     printSideInstructions(0);
 
-    cursor.set(TUNNEL_UNIT * 3 + 3, 4);
+    cursor.set(TUNNEL_UNIT * 3 + 3 + 1, 4);
     ANSI::reset();
     std::cout << "If you want to skip the tutorial, click 'n' at any point";
-    cursor.set(TUNNEL_UNIT * 3 + 3 + 1, 4);
+    cursor.set(TUNNEL_UNIT * 3 + 3 + 2, 4);
     std::cout << "To disable it, set TUTORIAL to 0 in constants.hpp and recompile";
 
-    cursor.set(TUNNEL_UNIT * 4 + 3, 4);
+    cursor.set(TUNNEL_UNIT * 4 + 4, 4);
     ANSI::reset();
     std::cout << "You are the ";
     Player::playerStyle.apply();
@@ -309,17 +309,102 @@ void tutorial() {
         }
         std::cout << std::flush;
     }
+    field->addPrintPawn(new Archer({Player::player->getCoordinates().y, WIDTH - 3 * TUNNEL_UNIT - 1}));
 
-    cursor.set(TUNNEL_UNIT * 4 + 3 + 2, 4);
+    cursor.set(TUNNEL_UNIT * 5 + 3 + 1, 4);
     ANSI::reset();
-    std::cout << "You are the ";
-    Player::playerStyle.apply();
-    std::cout << "$ player";
+    std::cout << "An ";
+    Archer::archerStyle.apply();
+    std::cout << "Archer";
     ANSI::reset();
-    std::cout << ", try moving around a bit" << std::endl;
+    std::cout << "! Enter bullet mode and shoot it!" << std::endl;
 
     flushInput();
+    while (input_ != 'j' && input_ != 'J') {
+        #if defined(_WIN32) or defined(__linux__)
+            input_ = getch();
+        #elif __APPLE__
+            input_ = getchar();
+        #endif
+        if (input_ == 'n') {
+            flushInput();
+            sista::clearScreen(true);
+            return;
+        }
+        act(input_);
+        std::cout << std::flush;
+    }
 
+    while (!Archer::archers.empty()) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(FRAME_DURATION));
+        Bullet::bullets[0]->move();
+    }
+
+    cursor.set(TUNNEL_UNIT * 6 + 3 + 1, 4);
+    ANSI::reset();
+    std::cout << "You can loot its ";
+    Chest::chestStyle.apply();
+    std::cout << "Chest";
+    ANSI::reset();
+    std::cout << ". Enter collect mode and pick it up." << std::endl;
+
+    while (!Chest::chests.empty()) {
+        #if defined(_WIN32) or defined(__linux__)
+            input_ = getch();
+        #elif __APPLE__
+            input_ = getchar();
+        #endif
+        if (input_ == 'n') {
+            flushInput();
+            sista::clearScreen(true);
+            return;
+        }
+        act(input_);
+        std::cout << std::flush;
+    }
+
+    cursor.set(TUNNEL_UNIT * 7 + 3, 4);
+    ANSI::reset();
+    std::cout << "The rest is simple: protect the highlighted area.";
+    cursor.set(TUNNEL_UNIT * 7 + 3 + 1, 4);
+    std::cout << "Oh, and don't starve. You consume meat. That's all.";
+
+    ANSI::Settings highlight(
+        ANSI::ForegroundColor::F_RED,
+        ANSI::BackgroundColor::B_RED,
+        ANSI::Attribute::BLINK
+    );
+    std::vector<sista::Pawn*> highlightPawns;
+    for (int i = 0; i < TUNNEL_UNIT * 2; i++) {
+        for (int j = WIDTH - TUNNEL_UNIT * 2; j < WIDTH; j++) {
+            sista::Pawn* pawn = new sista::Pawn(' ', {i, j}, highlight);
+            highlightPawns.push_back(pawn);
+            field->addPrintPawn(pawn);
+        }
+    }
+    
+    cursor.set(TUNNEL_UNIT * 7 + 3 + 4, WIDTH / 2.6);
+    ANSI::reset();
+    ANSI::setAttribute(ANSI::Attribute::ITALIC);
+    ANSI::setAttribute(ANSI::Attribute::BLINK);
+    std::cout << "Press any key to play Inävjaga...";
+    std::cout << std::flush;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    flushInput();
+
+    #if defined(_WIN32) or defined(__linux__)
+        input_ = getch();
+    #elif __APPLE__
+        input_ = getchar();
+    #endif
+
+    while (!highlightPawns.empty()) {
+        field->erasePawn(highlightPawns[highlightPawns.size() - 1]);
+        delete highlightPawns.back();
+        highlightPawns.pop_back();
+    }
+
+    flushInput();
     sista::clearScreen(true);
 }
 
