@@ -242,10 +242,12 @@ bool endConditions() {
 }
 
 void intro() {
-    #if defined(_WIN32) or defined(__linux__)
-    std::future<char> future = std::async(getch);
-    #elif __APPLE__
-    std::future<int> future = std::async(getchar);
+    #if defined(_WIN32)
+        std::future<int> future = std::async(getch);
+    #elif defined(__linux__)
+        std::future<int> future = std::async([](){ return static_cast<int>(getch()); });
+    #elif defined(__APPLE__)
+        std::future<int> future = std::async(getchar);
     #endif
     while (true) {
         std::cout << "Make sure that the following hash signs fit the best in a line in your terminal.\n";
