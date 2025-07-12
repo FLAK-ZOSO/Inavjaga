@@ -346,6 +346,7 @@ void tutorial() {
     while (!Archer::archers.empty()) {
         std::this_thread::sleep_for(std::chrono::milliseconds(FRAME_DURATION));
         Bullet::bullets[0]->move();
+        std::cout << std::flush;
     }
 
     cursor.set(TUNNEL_UNIT * 6 + 3 + 1, 4);
@@ -368,6 +369,7 @@ void tutorial() {
             return;
         }
         act(input_);
+        printSideInstructions(0);
         std::cout << std::flush;
     }
 
