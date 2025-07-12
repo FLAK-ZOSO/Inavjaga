@@ -1,6 +1,7 @@
 #include "cross_platform.hpp"
 #include "inavjaga.hpp"
 #include <algorithm>
+#include <future>
 #include <thread>
 #include <chrono>
 #include <mutex>
@@ -241,37 +242,42 @@ bool endConditions() {
 }
 
 void intro() {
-    std::cout << "Make sure that the following hash signs fit the best in a line in your terminal.\n";
-    std::cout << "Use ctrl+<minus> and ctrl+<plus> or ctrl+<mouse-scroll> to resize your terminal.\n";
-    std::cout << "Also, maximize your terminal window for an optimal view on the field.\n";
-    field->print(border);
-    ANSI::reset();
-    cursor.set(8, (unsigned short)(WIDTH / 2.1));
-    std::cout << "Inävjaga";
-    cursor.set(TUNNEL_UNIT * 3 + 7, TUNNEL_UNIT * 2 + 2);
-    Player::playerStyle.apply();
-    std::cout << "Inävjaga v" << VERSION;
-    cursor.set(TUNNEL_UNIT * 3 + 7, (unsigned short)(WIDTH / 2.6));
-    ANSI::reset();
-    ANSI::setAttribute(ANSI::Attribute::ITALIC);
-    ANSI::setAttribute(ANSI::Attribute::FAINT);
-    std::cout << " originally by ";
-    ANSI::reset();
-    Player::playerStyle.apply();
-    std::cout << AUTHOR << "     " << DATE;
-    ANSI::reset();
-    cursor.set(TUNNEL_UNIT * 3 + 9, (unsigned short)(WIDTH / 3.5));
-    ANSI::setAttribute(ANSI::Attribute::UNDERSCORE);
-    std::cout << "https://github.com/FLAK-ZOSO/Inavjaga";
-    std::cout << std::flush;
-    
     #if defined(_WIN32) or defined(__linux__)
-        getch();
+    std::future<char> future = std::async(getch);
     #elif __APPLE__
-        getchar();
+    std::future<char> future = std::async(getchar);
     #endif
+    while (true) {
+        std::cout << "Make sure that the following hash signs fit the best in a line in your terminal.\n";
+        std::cout << "Use ctrl+<minus> and ctrl+<plus> or ctrl+<mouse-scroll> to resize your terminal.\n";
+        std::cout << "Maximize your terminal window for an optimal view on the field, then enter any key to proceed.\n";
+        field->print(border);
+        ANSI::reset();
+        cursor.set(8, (unsigned short)(WIDTH / 2.1));
+        std::cout << "Inävjaga";
+        cursor.set(TUNNEL_UNIT * 3 + 7, TUNNEL_UNIT * 2 + 2);
+        Player::playerStyle.apply();
+        std::cout << "Inävjaga v" << VERSION;
+        cursor.set(TUNNEL_UNIT * 3 + 7, (unsigned short)(WIDTH / 2.6));
+        ANSI::reset();
+        ANSI::setAttribute(ANSI::Attribute::ITALIC);
+        ANSI::setAttribute(ANSI::Attribute::FAINT);
+        std::cout << " originally by ";
+        ANSI::reset();
+        Player::playerStyle.apply();
+        std::cout << AUTHOR << "     " << DATE;
+        ANSI::reset();
+        cursor.set(TUNNEL_UNIT * 3 + 9, (unsigned short)(WIDTH / 3.5));
+        ANSI::setAttribute(ANSI::Attribute::UNDERSCORE);
+        std::cout << "https://github.com/FLAK-ZOSO/Inavjaga";
+        std::cout << std::flush;
 
-    sista::clearScreen(true);
+        if (future.wait_for(std::chrono::milliseconds(FRAME_DURATION)) == std::future_status::ready) {
+            sista::clearScreen(true);
+            break;
+        }
+        sista::clearScreen(true);
+    }
 }
 
 void tutorial() {
