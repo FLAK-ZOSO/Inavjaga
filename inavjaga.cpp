@@ -243,33 +243,20 @@ bool endConditions() {
 
 void intro() {
     #if defined(__linux__)
-        std::future<int> future = std::async([](){ return static_cast<int>(getch()); });
+    std::future<int> future = std::async([](){ return static_cast<int>(getch()); });
+    std::chrono::duration refresh = std::chrono::milliseconds(FRAME_DURATION);
+    #elif defined(_WIN32)
+    std::future<int> future = std::async(getch);
+    // Lower refresh rate for Windows to contain the flickering effect in the terminal
+    std::chrono::duration refresh = std::chrono::milliseconds(FRAME_DURATION * 10);
     #elif defined(__APPLE__)
-        std::future<int> future = std::async(getchar);
+    std::future<int> future = std::async(getchar);
+    std::chrono::duration refresh = std::chrono::milliseconds(FRAME_DURATION);
     #endif
     while (true) {
-        #if defined(_WIN32)
-        HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-        // CONSOLE_SCREEN_BUFFER_INFO csbi;
-        // GetConsoleScreenBufferInfo(hConsole, &csbi);
-
-        // // Set buffer size
-        // COORD bufferSize = csbi.dwSize;
-        // bufferSize.Y = HEIGHT + 5;
-        // SetConsoleScreenBufferSize(hConsole, bufferSize);
-
-        // // Set window size
-        // SMALL_RECT windowSize = csbi.srWindow;
-        // windowSize.Bottom = windowSize.Top + HEIGHT + 4; // zero-based
-        // SetConsoleWindowInfo(hConsole, TRUE, &windowSize);
-
-        // https://stackoverflow.com/questions/6606884/setting-console-to-maximized-in-dev-c
-        SetConsoleDisplayMode(hConsole, CONSOLE_FULLSCREEN_MODE, NULL);
-        #else
         std::cout << "Make sure that the following hash signs fit the best in a line in your terminal.\n";
         std::cout << "Use ctrl+<minus> and ctrl+<plus> or ctrl+<mouse-scroll> to resize your terminal.\n";
         std::cout << "Maximize your terminal window for an optimal view on the field, then enter any key to proceed.\n";
-        #endif
         field->print(border);
         ANSI::reset();
         cursor.set(8, (unsigned short)(WIDTH / 2.1));
@@ -291,15 +278,10 @@ void intro() {
         std::cout << "https://github.com/FLAK-ZOSO/Inavjaga";
         std::cout << std::flush;
 
-        #if defined(_WIN32)
-        sista::clearScreen(true);
-        return;
-        #else
-        if (future.wait_for(std::chrono::milliseconds(FRAME_DURATION)) == std::future_status::ready) {
+        if (future.wait_for(refresh) == std::future_status::ready) {
             sista::clearScreen(true);
             return;
         }
-        #endif
         sista::clearScreen(true);
     }
 }
