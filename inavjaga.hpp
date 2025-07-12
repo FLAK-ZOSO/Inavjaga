@@ -201,6 +201,7 @@ public:
     static ANSI::Settings wormHeadStyle;
     static std::vector<Worm*> worms;
     static std::bernoulli_distribution turning;
+    static std::bernoulli_distribution moving;
     static std::bernoulli_distribution spawning;
     static std::bernoulli_distribution eatingArcher;
     static std::bernoulli_distribution eatingTail;

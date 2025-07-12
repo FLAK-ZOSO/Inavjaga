@@ -148,7 +148,9 @@ int main(int argc, char* argv[]) {
             if (Worm::turning(rng)) {
                 worm->turn();
             }
-            worm->move();
+            if (Worm::moving(rng)) {
+                worm->move();
+            }
         }
         for (Worm* worm : Worm::worms) {
             if (worm->collided) {
@@ -248,18 +250,18 @@ void intro() {
     while (true) {
         #if defined(_WIN32)
         HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-        CONSOLE_SCREEN_BUFFER_INFO csbi;
-        GetConsoleScreenBufferInfo(hConsole, &csbi);
+        // CONSOLE_SCREEN_BUFFER_INFO csbi;
+        // GetConsoleScreenBufferInfo(hConsole, &csbi);
 
-        // Set buffer size
-        COORD bufferSize = csbi.dwSize;
-        bufferSize.Y = HEIGHT + 5;
-        SetConsoleScreenBufferSize(hConsole, bufferSize);
+        // // Set buffer size
+        // COORD bufferSize = csbi.dwSize;
+        // bufferSize.Y = HEIGHT + 5;
+        // SetConsoleScreenBufferSize(hConsole, bufferSize);
 
-        // Set window size
-        SMALL_RECT windowSize = csbi.srWindow;
-        windowSize.Bottom = windowSize.Top + HEIGHT + 4; // zero-based
-        SetConsoleWindowInfo(hConsole, TRUE, &windowSize);
+        // // Set window size
+        // SMALL_RECT windowSize = csbi.srWindow;
+        // windowSize.Bottom = windowSize.Top + HEIGHT + 4; // zero-based
+        // SetConsoleWindowInfo(hConsole, TRUE, &windowSize);
 
         // https://stackoverflow.com/questions/6606884/setting-console-to-maximized-in-dev-c
         SetConsoleDisplayMode(hConsole, CONSOLE_FULLSCREEN_MODE, NULL);
@@ -1449,6 +1451,7 @@ void Worm::remove() {
 }
 Direction Worm::options[2] = {Direction::LEFT, Direction::RIGHT};
 std::bernoulli_distribution Worm::turning(WORM_TURNING_PROBABILITY);
+std::bernoulli_distribution Worm::moving(WORM_MOVING_PROBABILITY);
 std::bernoulli_distribution Worm::spawning(WORM_SPAWNING_PROBABILITY);
 std::bernoulli_distribution Worm::eatingTail(WORM_EATING_TAIL_PROBABILITY);
 std::bernoulli_distribution Worm::eatingArcher(WORM_EATING_ARCHER_PROBABILITY);

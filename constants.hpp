@@ -13,7 +13,7 @@
 #define PORTALS_PER_LINE 2
 
 // Game speed
-#define FRAME_DURATION 150 // Expressed in milliseconds
+#define FRAME_DURATION 100 // Expressed in milliseconds
 #define BULLET_SPEED 1
 
 // Inventory
@@ -63,6 +63,7 @@
 #define WORM_SPAWNING_PROBABILITY 0.004
 #define WORM_EATING_ARCHER_PROBABILITY 0.1
 #define WORM_EATING_TAIL_PROBABILITY 0.2
+#define WORM_MOVING_PROBABILITY 0.75
 #define CLAY_RELEASE_PROBABILITY 0.01
 
 // Spawn settings
