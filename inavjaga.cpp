@@ -344,8 +344,9 @@ void tutorial() {
             flushInput();
             sista::clearScreen(true);
             return;
+        } else if (input_ == 'j' || input_ != 'J') {
+            act(input_);
         }
-        act(input_);
         std::cout << std::flush;
     }
 
