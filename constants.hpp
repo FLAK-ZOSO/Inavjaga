@@ -1,4 +1,4 @@
-#define VERSION "0.4.0"
+#define VERSION "0.4.1"
 #define DATE "2025-07-12"
 #define AUTHOR "FLAK-ZOSO"
 

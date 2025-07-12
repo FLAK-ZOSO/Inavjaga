@@ -1276,6 +1276,9 @@ WormBody::WormBody(sista::Coordinates coordinates, Direction direction) : Entity
 }
 void WormBody::die() {
     sista::Coordinates drop = this->coordinates;
+    #if DEBUG
+    std::cerr << "WormBody::die() called for " << this << " at {" << drop.y << ", " << drop.x << "}" << std::endl;
+    #endif
     field->addPrintPawn(new Chest(drop, {0, 1, 0}));
     WormBody::wormBodies.erase(std::find(WormBody::wormBodies.begin(), WormBody::wormBodies.end(), this));
     this->head->body.erase(std::find(this->head->body.begin(), this->head->body.end(), this));
@@ -1341,6 +1344,9 @@ void Worm::move() {
         if (body.size() > WORM_LENGTH) {
             WormBody* tail = body.front();
             sista::Coordinates drop = tail->getCoordinates();
+            #if DEBUG
+            std::cerr << "In Worm::move() deleting the tail piece " << this << " at {" << drop.y << ", " << drop.x << "}" << std::endl;
+            #endif
             field->erasePawn(tail);
             if (clayRelease(rng)) {
                 field->addPrintPawn(new Chest(drop, {1, 0, 0}));
