@@ -43,7 +43,6 @@ bool end = false;
 int main(int argc, char* argv[]) {
     #ifdef __APPLE__
         term_echooff();
-        // system("stty raw -echo");
     #endif
     std::ios_base::sync_with_stdio(false);
     ANSI::reset(); // Reset the settings
@@ -220,7 +219,6 @@ int main(int argc, char* argv[]) {
         getch();
     #endif
     #ifdef __APPLE__
-        // system("stty cooked echo");
         tcsetattr(0, TCSANOW, &orig_termios);
     #endif
 }
