@@ -54,3 +54,6 @@ jobs:
         with:
           name: inavjaga-${{ steps.artifact-name.outputs.name }}
           path: ${{ steps.find-exe.outputs.exe_path }}
+
+      - name: List files
+        run: ls -lR .
