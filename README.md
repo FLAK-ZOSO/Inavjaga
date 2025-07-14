@@ -2,7 +2,56 @@
 
 **Inävjaga** is a [Sista](https://github.com/FLAK-ZOSO/Sista)-based C++ terminal videogame.
 
-![alt text](banner.png)
+![Inävjaga banner](image/banner.png)
+
+## Installation
+
+### From release executable
+
+You can download the latest release executable for your operative system from the [releases page](https://github.com/FLAK-ZOSO/Inavjaga/releases).
+
+### From source
+
+This approach allows you to customize the game (by editing `constants.hpp`) and access the source code.
+
+The requisites for this approach are:
+- familiarity with the shell that your operative system provides
+- `git` version control system
+- `g++` compiler, must support ISO C++17 or GNU C++17
+- `make` utility
+
+You can potentially use just `g++` and copy-paste the commands from the `Makefile` or from below.
+The same goes for `git`, you can download the source code as a ZIP archive, but using `git` is recommended for pulling updates without downloading the whole archive again.
+
+You can clone the repository and compile the game from source as follows:
+
+```bash
+git clone https://github.com/FLAK-ZOSO/Inavjaga
+cd Inavjaga
+make
+```
+
+If you don't have `make` installed, you can copy and paste the following commands in your terminal:
+
+```bash
+g++ -std=c++17 -Wall -g -c include/sista/ANSI-Settings.cpp include/sista/border.cpp include/sista/coordinates.cpp include/sista/cursor.cpp include/sista/field.cpp include/sista/pawn.cpp
+g++ -std=c++17 -Wall -g -c inavjaga.cpp -Wno-narrowing
+g++ -std=c++17 -Wall -g -o inavjaga inavjaga.o ANSI-Settings.o border.o coordinates.o cursor.o pawn.o field.o
+```
+
+After compiling the game, you can run it with:
+
+```bash
+# On Linux and MacOS (or other Unix-like systems)
+./inavjaga
+```
+
+```bash
+# On Windows (cmd.exe, while PowerShell goes with `.\inavjaga.exe`)
+inavjaga.exe
+```
+
+If you compile the game from source, you will be able to customize and rebalance the game by editing the `constants.hpp` file and not only.
 
 ## Description
 
@@ -10,7 +59,7 @@
 
 Your character is represented by the `$` symbol and is surviving day by day hunting for food and protecting its home from the dangers of the tunnels.
 
-![Home area](home.png)
+![Home area](image/home.png)
 
 If the enemies will reach home, no hopes will be left, so you need to defend it at all costs.
 
