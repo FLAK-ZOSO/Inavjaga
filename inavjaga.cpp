@@ -658,9 +658,9 @@ void act(char input_) {
         case 'e': case 'E': case 'q':
             Player::player->mode = Player::Mode::DUMPCHEST;
             break;
-        case 't': case 'T':
-            Player::player->mode = Player::Mode::TRAP;
-            break;
+        // case 't': case 'T':
+        //     Player::player->mode = Player::Mode::TRAP;
+        //     break;
         case 'm': case 'M': case '*':
             Player::player->mode = Player::Mode::MINE;
             break;

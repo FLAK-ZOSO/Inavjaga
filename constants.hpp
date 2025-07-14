@@ -1,8 +1,8 @@
-#define VERSION "0.4.1"
-#define DATE "2025-07-12"
+#define VERSION "1.0.0-beta.1"
+#define DATE "2025-07-14"
 #define AUTHOR "FLAK-ZOSO"
 
-#define DEBUG 0
+#define DEBUG 1
 #define INTRO 1
 #define TUTORIAL 1
 

@@ -1,0 +1,6 @@
+inavjaga
+.vscode/
+*.o
+*.exe
+*.out
+*.log
