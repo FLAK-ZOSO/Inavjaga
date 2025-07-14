@@ -1,4 +1,4 @@
-#include "include/sista/sista.hpp"
+#include "../include/sista/sista.hpp"
 #include "direction.hpp"
 #include "entity.hpp"
 #pragma once

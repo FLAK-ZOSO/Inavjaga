@@ -5,6 +5,12 @@
 #include "bullet.hpp"
 #include "mine.hpp"
 
+const Inventory INITIAL_INVENTORY {
+    INITIAL_CLAY,
+    INITIAL_BULLETS,
+    INITIAL_MEAT
+};
+
 Player::Player(sista::Coordinates coordinates) : Entity('$', coordinates, playerStyle, Type::PLAYER), mode(Player::Mode::COLLECT), inventory(INITIAL_INVENTORY) {}
 Player::Player() : Entity('$', {0, 0}, playerStyle, Type::PLAYER), mode(Player::Mode::COLLECT), inventory(INITIAL_INVENTORY) {}
 void Player::remove() {

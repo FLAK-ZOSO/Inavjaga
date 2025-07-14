@@ -5,7 +5,7 @@ LDFLAGS = -lpthread
 
 # List all your source files here
 SRC = inavjaga.cpp \
-      entity.cpp portal.cpp player.cpp archer.cpp worm.cpp wall.cpp bullet.cpp chest.cpp mine.cpp enemyBullet.cpp \
+      src/entity.cpp src/portal.cpp src/player.cpp src/archer.cpp src/worm.cpp src/wall.cpp src/bullet.cpp src/chest.cpp src/mine.cpp src/enemyBullet.cpp \
       include/sista/ANSI-Settings.cpp include/sista/border.cpp include/sista/coordinates.cpp include/sista/cursor.cpp include/sista/field.cpp include/sista/pawn.cpp
 
 OBJ = $(SRC:.cpp=.o)
@@ -23,5 +23,6 @@ inavjaga: $(OBJ)
 
 clean:
 	rm -f *.o
+	rm -f src/*.o
 
 .PHONY: all clean

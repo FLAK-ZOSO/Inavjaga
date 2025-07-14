@@ -27,11 +27,6 @@ sista::Border border(
         ANSI::Attribute::BRIGHT
     }
 );
-const Inventory INITIAL_INVENTORY {
-    INITIAL_CLAY,
-    INITIAL_BULLETS,
-    INITIAL_MEAT
-};
 std::mutex streamMutex;
 bool speedup = false;
 bool pause_ = false;

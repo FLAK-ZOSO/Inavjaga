@@ -1,26 +1,23 @@
 #include "include/sista/sista.hpp"
-#include "constants.hpp"
-#include "direction.hpp"
-#include "inventory.hpp"
-#include "entity.hpp"
-#include "portal.hpp"
-#include "player.hpp"
-#include "chest.hpp"
-#include "bullet.hpp"
-#include "worm.hpp"
-#include "mine.hpp"
-#include "wall.hpp"
-#include "enemyBullet.hpp"
-#include "archer.hpp"
+#include "src/constants.hpp"
+#include "src/direction.hpp"
+#include "src/inventory.hpp"
+#include "src/entity.hpp"
+#include "src/portal.hpp"
+#include "src/player.hpp"
+#include "src/chest.hpp"
+#include "src/bullet.hpp"
+#include "src/worm.hpp"
+#include "src/mine.hpp"
+#include "src/wall.hpp"
+#include "src/enemyBullet.hpp"
+#include "src/archer.hpp"
 #include <unordered_map>
 #include <vector>
 #include <random>
 #include <map>
 #include <set>
 
-
-extern std::unordered_map<Direction, sista::Coordinates> directionMap;
-extern std::unordered_map<Direction, char> directionSymbol;
 extern std::set<char> movementKeys;
 extern std::mt19937 rng;
 extern std::map<int, std::vector<int>> passages; // {y, {x1, x2, x3...}}
