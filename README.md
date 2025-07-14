@@ -10,6 +10,8 @@
 
 You can download the latest release executable for your operative system from the [releases page](https://github.com/FLAK-ZOSO/Inavjaga/releases).
 
+![Video instructions for Windows](video/Inävjaga%20Windows%20instructions.mp4)
+
 ### From source
 
 This approach allows you to customize the game (by editing `constants.hpp`) and access the source code.
