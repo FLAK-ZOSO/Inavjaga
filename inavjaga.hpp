@@ -1,4 +1,6 @@
 #include "include/sista/sista.hpp"
+#include "entity.hpp"
+#include "portal.hpp"
 #include "constants.hpp"
 #include <unordered_map>
 #include <vector>
@@ -6,22 +8,6 @@
 #include <map>
 #include <set>
 
-enum Type {
-    PLAYER,
-    BULLET,
-    WALL, // #
-    PORTAL, // =
-    CHEST, // C, can be collected by the player
-    TRAP, // T, will act when stepped on
-    MINE, // *, will be triggered when passing by
-
-    // Inspired from https://github.com/Lioydiano/Dune
-    WORM_HEAD, // H
-    WORM_BODY, // <^v>
-
-    ARCHER, // A
-    ENEMY_BULLET,
-};
 
 enum Direction {UP, RIGHT, DOWN, LEFT};
 extern std::unordered_map<Direction, sista::Coordinates> directionMap;
@@ -58,16 +44,6 @@ struct Inventory {
 
     inline bool containsAtLeast(const Inventory) const;
 }; // The idea is that the inventory can be dropped (as CHEST) and picked up by the player
-
-
-class Entity : public sista::Pawn {
-public:
-    Type type;
-
-    Entity(char, sista::Coordinates, ANSI::Settings&, Type);
-    virtual ~Entity() {}
-    virtual void remove() = 0;
-};
 
 
 class Player : public Entity {
@@ -134,17 +110,6 @@ public:
     Inventory inventory;
 
     Chest(sista::Coordinates, Inventory);
-    void remove() override;
-};
-
-class Portal : public Entity {
-public:
-    static ANSI::Settings portalStyle;
-    static std::vector<Portal*> portals;
-    Portal* exit; // The matching portal
-
-    Portal(sista::Coordinates);
-    Portal(sista::Coordinates, Portal*);
     void remove() override;
 };
 
