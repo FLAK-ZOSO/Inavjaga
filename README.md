@@ -41,9 +41,25 @@ make
 If you don't have `make` installed, you can copy and paste the following commands in your terminal:
 
 ```bash
-g++ -std=c++17 -Wall -g -c include/sista/ANSI-Settings.cpp include/sista/border.cpp include/sista/coordinates.cpp include/sista/cursor.cpp include/sista/field.cpp include/sista/pawn.cpp
-g++ -std=c++17 -Wall -g -c inavjaga.cpp -Wno-narrowing
-g++ -std=c++17 -Wall -g -o inavjaga inavjaga.o ANSI-Settings.o border.o coordinates.o cursor.o pawn.o field.o
+g++ -std=c++17 -Wpedantic -Wno-narrowing -g -c inavjaga.cpp -o inavjaga.o
+g++ -std=c++17 -Wpedantic -Wno-narrowing -g -c src/inventory.cpp -o src/inventory.o
+g++ -std=c++17 -Wpedantic -Wno-narrowing -g -c src/entity.cpp -o src/entity.o
+g++ -std=c++17 -Wpedantic -Wno-narrowing -g -c src/portal.cpp -o src/portal.o
+g++ -std=c++17 -Wpedantic -Wno-narrowing -g -c src/player.cpp -o src/player.o
+g++ -std=c++17 -Wpedantic -Wno-narrowing -g -c src/archer.cpp -o src/archer.o
+g++ -std=c++17 -Wpedantic -Wno-narrowing -g -c src/worm.cpp -o src/worm.o
+g++ -std=c++17 -Wpedantic -Wno-narrowing -g -c src/wall.cpp -o src/wall.o
+g++ -std=c++17 -Wpedantic -Wno-narrowing -g -c src/bullet.cpp -o src/bullet.o
+g++ -std=c++17 -Wpedantic -Wno-narrowing -g -c src/chest.cpp -o src/chest.o
+g++ -std=c++17 -Wpedantic -Wno-narrowing -g -c src/mine.cpp -o src/mine.o
+g++ -std=c++17 -Wpedantic -Wno-narrowing -g -c src/enemyBullet.cpp -o src/enemyBullet.o
+g++ -std=c++17 -Wpedantic -Wno-narrowing -g -c include/sista/ANSI-Settings.cpp -o include/sista/ANSI-Settings.o
+g++ -std=c++17 -Wpedantic -Wno-narrowing -g -c include/sista/border.cpp -o include/sista/border.o
+g++ -std=c++17 -Wpedantic -Wno-narrowing -g -c include/sista/coordinates.cpp -o include/sista/coordinates.o
+g++ -std=c++17 -Wpedantic -Wno-narrowing -g -c include/sista/cursor.cpp -o include/sista/cursor.o
+g++ -std=c++17 -Wpedantic -Wno-narrowing -g -c include/sista/field.cpp -o include/sista/field.o
+g++ -std=c++17 -Wpedantic -Wno-narrowing -g -c include/sista/pawn.cpp -o include/sista/pawn.o
+g++ -std=c++17 -Wpedantic -Wno-narrowing -g -o inavjaga inavjaga.o src/inventory.o src/entity.o src/portal.o src/player.o src/archer.o src/worm.o src/wall.o src/bullet.o src/chest.o src/mine.o src/enemyBullet.o include/sista/ANSI-Settings.o include/sista/border.o include/sista/coordinates.o include/sista/cursor.o include/sista/field.o include/sista/pawn.o -lpthread
 ```
 
 After compiling the game, you can run it with:
