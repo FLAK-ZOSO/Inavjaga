@@ -1,7 +1,8 @@
 #include "include/sista/sista.hpp"
+#include "constants.hpp"
 #include "entity.hpp"
 #include "portal.hpp"
-#include "constants.hpp"
+#include "inventory.hpp"
 #include <unordered_map>
 #include <vector>
 #include <random>
@@ -32,18 +33,6 @@ void input();
 void act(char);
 void printEndInformation(EndReason);
 void deallocateAll();
-
-
-struct Inventory {
-    short clay;
-    short bullets;
-    short meat;
-
-    void operator+=(const Inventory&);
-    void operator-=(const Inventory&);
-
-    inline bool containsAtLeast(const Inventory) const;
-}; // The idea is that the inventory can be dropped (as CHEST) and picked up by the player
 
 
 class Player : public Entity {

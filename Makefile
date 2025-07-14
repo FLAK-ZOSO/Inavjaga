@@ -10,7 +10,7 @@ SRC = inavjaga.cpp \
 
 OBJ = $(SRC:.cpp=.o)
 
-all: inavjaga
+all: inavjaga clean
 
 inavjaga: $(OBJ)
 	@echo "Linking with -static (if possible)..."
