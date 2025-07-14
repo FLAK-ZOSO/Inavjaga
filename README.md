@@ -12,6 +12,11 @@ You can download the latest release executable for your operative system from th
 
 https://github.com/user-attachments/assets/9b4b2371-a87a-4a30-b22d-b42b4e279a4a
 
+This approach is unlikely to work for MacOS users for the following reasons:
+- the game is not signed, so it will be blocked by the system;
+- the game is not statically linked and that's impossible to achieve [by Apple's design choices](https://discussions.apple.com/thread/1945589?sortBy=rank) despite [various attempts](https://github.com/skaht/Csu-85/issues/2) to do so;
+Thus, if you are a MacOS user, you should compile the game from source as explained below.
+
 ### From source
 
 This approach allows you to customize the game (by editing `constants.hpp`) and access the source code.
