@@ -10,7 +10,7 @@
 
 You can download the latest release executable for your operative system from the [releases page](https://github.com/FLAK-ZOSO/Inavjaga/releases).
 
-![Video instructions for Windows](video/Inävjaga%20Windows%20instructions.mp4)
+https://github.com/user-attachments/assets/9b4b2371-a87a-4a30-b22d-b42b4e279a4a
 
 ### From source
 
