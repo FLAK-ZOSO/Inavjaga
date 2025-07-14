@@ -711,10 +711,10 @@ void printEndInformation(EndReason endReason) {
             std::cout << "You have starved because you ran out of meat";
             break;
         case EndReason::TOUCHDOWN:
-            std::cout << "Some enemy reached the top right area that you were supposed to defend";
+            std::cout << "Some enemy reached the top right area";
             break;
         default:
-            std::cout << "Something unexpected went wrong internally and sadly your game was terminated";
+            std::cout << "Something unexpected went wrong internally";
             break;
     }
     std::cout << std::flush;
