@@ -12,11 +12,9 @@
 #include "src/wall.hpp"
 #include "src/enemyBullet.hpp"
 #include "src/archer.hpp"
-#include <unordered_map>
 #include <vector>
-#include <random>
-#include <map>
 #include <set>
+#include <map>
 
 extern std::set<char> movementKeys;
 extern std::mt19937 rng;

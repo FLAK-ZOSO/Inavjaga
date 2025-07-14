@@ -764,14 +764,3 @@ std::mt19937 rng(std::chrono::system_clock::now().time_since_epoch().count());
 std::map<int, std::vector<int>> passages; // Lateral passages, "main tunnel" tresholds
 std::map<int, std::vector<int>> breaches; // Central breaches, "holes"
 std::bernoulli_distribution dumbMoveDistribution(DUMB_MOVE_PROBABILITY);
-
-void Inventory::operator+=(const Inventory& other) {
-    clay += other.clay;
-    bullets += other.bullets;
-    meat += other.meat;
-}
-void Inventory::operator-=(const Inventory& other) {
-    clay -= std::max(other.clay, (short)0);
-    bullets -= std::max(other.bullets, (short)0);
-    meat -= std::max(other.meat, (short)0);
-}
