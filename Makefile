@@ -1,29 +1,28 @@
 # Makefile for Inavjaga
-IMPLEMENTATIONS = include/sista/ANSI-Settings.cpp include/sista/border.cpp include/sista/coordinates.cpp include/sista/cursor.cpp include/sista/field.cpp include/sista/pawn.cpp
+CXX = g++
+CXXFLAGS = -std=c++17 -Wpedantic -Wno-narrowing -g
+LDFLAGS = -lpthread
 
-all:
-	@echo "Compiling Inavjaga..."
-	$(MAKE) compile-sista
-	$(MAKE) compile-inavjaga
-	$(MAKE) link
-	$(MAKE) clean
-	@echo "Inavjaga compiled successfully!"
-install: all
+# List all your source files here
+SRC = inavjaga.cpp \
+      src/inventory.cpp src/entity.cpp src/portal.cpp src/player.cpp src/archer.cpp src/worm.cpp src/wall.cpp src/bullet.cpp src/chest.cpp src/mine.cpp src/enemyBullet.cpp \
+      include/sista/ANSI-Settings.cpp include/sista/border.cpp include/sista/coordinates.cpp include/sista/cursor.cpp include/sista/field.cpp include/sista/pawn.cpp
 
-compile-sista:
-	g++ -std=c++17 -Wpedantic -g -c $(IMPLEMENTATIONS)
-sista: compile-sista
+OBJ = $(SRC:.cpp=.o)
 
-compile-inavjaga:
-	g++ -std=c++17 -Wpedantic -g -c -static inavjaga.cpp -Wno-narrowing
-inavjaga: compile-inavjaga
+all: inavjaga clean
 
-link:
+inavjaga: $(OBJ)
 	@echo "Linking with -static (if possible)..."
-	@(g++ -std=c++17 -Wpedantic -g -static -lpthread -o inavjaga inavjaga.o ANSI-Settings.o border.o coordinates.o cursor.o pawn.o field.o || \
-	  g++ -std=c++17 -Wpedantic -g -lpthread -o inavjaga inavjaga.o ANSI-Settings.o border.o coordinates.o cursor.o pawn.o field.o)
+	@($(CXX) $(CXXFLAGS) -static -o $@ $^ $(LDFLAGS) || \
+	  $(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS))
+	@echo "Inavjaga compiled successfully!"
+
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
 	rm -f *.o
+	rm -f src/*.o
 
-.PHONY: inavjaga
+.PHONY: all clean
