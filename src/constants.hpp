@@ -1,11 +1,11 @@
 #pragma once
 
-#define VERSION "1.0.0-beta.2"
+#define VERSION "1.0.0-beta.4"
 #define DATE "2025-07-15"
 #define AUTHOR "FLAK-ZOSO"
 
 
-#define DEBUG 0
+#define DEBUG 1
 #define INTRO 1 // Set to 0 to disable the intro screen on startup
 #define TUTORIAL 1 // Set to 0 to disable the tutorial on startup
 
@@ -55,7 +55,7 @@
 #define WORM_HEALTH_POINTS 3 // The initial health points of a worm
 
 // Probabilistic settings (1 = 100%, 0.5 = 50%, etc.)
-#define WALL_WEARING_PROBABILITY 0.1 // The probability of some walls being worn down (losing one strength point) in any given frame
+#define WALL_WEARING_PROBABILITY 0.3 // The probability of some walls being worn down (losing one strength point) in any given frame
 #define DAMAGED_WALLS_COUNT 5 // The number of walls getting damaged at once if the wall wearing probability is met
 #define MINE_EXPLOSION_IN_FRAME_PROBABILITY 0.10 // The probability of a mine exploding in any given frame given that it has been triggered
 #define DUMB_MOVE_PROBABILITY 0.25 // The probability of an archer moving in a random direction instead of making a decision based on the environment

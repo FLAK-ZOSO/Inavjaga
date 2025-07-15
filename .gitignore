@@ -4,3 +4,4 @@ inavjaga
 *.exe
 *.out
 *.log
+.gdb_history
