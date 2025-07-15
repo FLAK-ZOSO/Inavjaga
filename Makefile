@@ -24,5 +24,6 @@ inavjaga: $(OBJ)
 clean:
 	rm -f *.o
 	rm -f src/*.o
+	rm -f include/sista/*.o
 
 .PHONY: all clean
