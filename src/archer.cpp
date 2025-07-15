@@ -66,12 +66,15 @@ void Archer::move() {
         while (!bfs.empty()) {
             auto [coords, choice] = bfs.front();
             bfs.pop();
+
+            if (std::find(visited.begin(), visited.end(), coords) != visited.end()) continue; // Already visited
+            visited.insert(coords);
+
             #if DEBUG
             std::cerr << "\tArcher::move() - BFS coords: {" << coords.y << "," << coords.x << "}, choice: " << directionSymbol[choice] << "\n";
             #endif
 
             if (field->isOutOfBounds(coords)) continue; // Exiting the field
-            if (std::find(visited.begin(), visited.end(), coords) != visited.end()) continue; // Already visited
             if (field->isOccupied(coords)) { // Cell is not free
                 Type type = ((Entity*)field->getPawn(coords))->type;
                 if (type == Type::WALL || type == Type::PORTAL) {
@@ -87,7 +90,6 @@ void Archer::move() {
                 found = true;
                 break;
             }
-            visited.insert(coords);
 
             bfs.push({coords + directionMap[Direction::UP], choice});
             bfs.push({coords + directionMap[Direction::LEFT], choice});
