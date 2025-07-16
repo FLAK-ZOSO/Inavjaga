@@ -287,7 +287,7 @@ void tutorial() {
 
     cursor.set(TUNNEL_UNIT * 3 + 3 + 1, 4);
     ANSI::reset();
-    std::cout << "If you want to skip the tutorial, click 'n' at any point";
+    std::cout << "When you want to skip the tutorial, click 'n' at any point";
     cursor.set(TUNNEL_UNIT * 3 + 3 + 2, 4);
     std::cout << "To disable it, set TUTORIAL to 0 in constants.hpp and recompile";
 
@@ -327,6 +327,7 @@ void tutorial() {
     std::cout << "! Enter bullet mode and shoot it!" << std::endl;
 
     flushInput();
+    input_ = ' ';
     while (input_ != 'j' && input_ != 'J') {
         #if defined(_WIN32) or defined(__linux__)
             input_ = getch();
@@ -377,10 +378,25 @@ void tutorial() {
 
     cursor.set(TUNNEL_UNIT * 7 + 3, 4);
     ANSI::reset();
-    std::cout << "The rest is simple: protect the highlighted area.";
+    std::cout << "Each wall layer can be traversed by you through ";
+    Portal::portalStyle.apply();
+    std::cout << "& Portals";
+    ANSI::reset();
+    std::cout << std::flush;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
     cursor.set(TUNNEL_UNIT * 7 + 3 + 1, 4);
-    std::cout << "Oh, and don't starve. You consume meat. That's all.";
+    std::cout << "You might also encounter ";
+    WormBody::wormBodyStyle.apply();
+    std::cout << ">>>>>>>H Snakes";
+    ANSI::reset();
+    std::cout << ", I hope you have good aim.";
+    std::cout << std::flush;
+    std::this_thread::sleep_for(std::chrono::seconds(3));
 
+    cursor.set(TUNNEL_UNIT * 8 + 4, TUNNEL_UNIT * 2 + 3);
+    ANSI::reset();
+    std::cout << "Protect the red area. And don't starve: you consume meat.";
+    
     ANSI::Settings highlight(
         ANSI::ForegroundColor::F_RED,
         ANSI::BackgroundColor::B_RED,
@@ -394,8 +410,10 @@ void tutorial() {
             field->addPrintPawn(pawn);
         }
     }
+    std::cout << std::flush;
+    std::this_thread::sleep_for(std::chrono::seconds(3));
     
-    cursor.set(TUNNEL_UNIT * 7 + 3 + 4, WIDTH / 2.6);
+    cursor.set(TUNNEL_UNIT * 8 + 3 + 4, WIDTH / 3);
     ANSI::reset();
     ANSI::setAttribute(ANSI::Attribute::ITALIC);
     ANSI::setAttribute(ANSI::Attribute::BLINK);
