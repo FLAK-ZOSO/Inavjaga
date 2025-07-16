@@ -58,17 +58,31 @@ void Archer::move() {
         }); // {coordinate, first direction taken in the path}
         std::set<sista::Coordinates> visited;
         visited.insert({coordinates});
+        #if DEBUG
+        std::cerr << "Archer::move() - Starting BFS from {" << coordinates.y << "," << coordinates.x << "}\n";
+        #endif
         Direction chosenMove;
         bool found = false;
         while (!bfs.empty()) {
             auto [coords, choice] = bfs.front();
             bfs.pop();
 
-            if (field->isOutOfBounds(coords)) continue; // Exiting the field
             if (std::find(visited.begin(), visited.end(), coords) != visited.end()) continue; // Already visited
+            visited.insert(coords);
+
+            #if DEBUG
+            std::cerr << "\tArcher::move() - BFS coords: {" << coords.y << "," << coords.x << "}, choice: " << directionSymbol[choice] << "\n";
+            #endif
+
+            if (field->isOutOfBounds(coords)) continue; // Exiting the field
             if (field->isOccupied(coords)) { // Cell is not free
                 Type type = ((Entity*)field->getPawn(coords))->type;
-                if (type == Type::WALL || type == Type::PORTAL) continue;
+                if (type == Type::WALL || type == Type::PORTAL) {
+                    #if DEBUG
+                    std::cerr << "\tArcher::move() - Cell occupied by " << type << ", skipping\n";
+                    #endif
+                    continue;
+                }
             }
             if (coords.y % (TUNNEL_UNIT * 3) == 0) continue; // Exiting the breach
             if (coords.y % (TUNNEL_UNIT * 3) < TUNNEL_UNIT * 2) { // Exiting the breach on the upper side
@@ -76,7 +90,6 @@ void Archer::move() {
                 found = true;
                 break;
             }
-            visited.insert(coords);
 
             bfs.push({coords + directionMap[Direction::UP], choice});
             bfs.push({coords + directionMap[Direction::LEFT], choice});

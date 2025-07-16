@@ -30,12 +30,18 @@ bool Wall::getHit() {
         });
         std::set<sista::Coordinates> visited;
         visited.insert({coordinates});
+        #if DEBUG
+        std::cerr << "Wall::getHit() - Starting DFS from {" << coordinates.y << "," << coordinates.x << "}\n";
+        #endif
         sista::Coordinates coords, breach;
         bool foundBelowExit = false;
         bool foundAboveExit = false;
         while (!dfs.empty() && !foundBelowExit && !foundAboveExit) {
             coords = dfs.top();
             dfs.pop();
+            #if DEBUG
+            std::cerr << "\tWall::getHit() - DFS coords: {" << coords.y << "," << coords.x << "}\n";
+            #endif
 
             if (field->isOutOfBounds(coords)) continue; // Exiting the field
             if (visited.count(coords)) continue; // Already visited
@@ -49,22 +55,34 @@ bool Wall::getHit() {
                 foundBelowExit = true;
                 // The breach was right above for how neighbouring is defined in a grid
                 breach = coords + directionMap[Direction::UP];
+                #if DEBUG
+                std::cerr << "\t\tWall::getHit() - Found breach below exit at {" << breach.y << "," << breach.x << "}\n";
+                #endif
             }
             if (coords.y % (TUNNEL_UNIT * 3) < TUNNEL_UNIT * 2) { // Exiting the breach on the upper side
                 foundAboveExit = true;
+                #if DEBUG
+                std::cerr << "\t\tWall::getHit() - Found breach above exit at {" << coords.y << "," << coords.x << "}\n";
+                #endif
                 continue;
             }
             if (coords.x < TUNNEL_UNIT * 2
                 && (coords.y / TUNNEL_UNIT / 3) % 2 == 0) {
                 // On "even" tunnels we should not consider part of the breach the part to the left
+                #if DEBUG
+                std::cerr << "\t\tWall::getHit() - Skipping left part of the breach at {" << coords.y << "," << coords.x << "}\n";
+                #endif
                 continue;
             } else if (coords.x >= WIDTH-(TUNNEL_UNIT * 2)
                         && (coords.y / TUNNEL_UNIT / 3) % 2 == 1) {
                 // On "odd" tunnels we should not consider part of the breach the part to the right
+                #if DEBUG
+                std::cerr << "\t\tWall::getHit() - Skipping right part of the breach at {" << coords.y << "," << coords.x << "}\n";
+                #endif
                 continue;
             }
             if (foundBelowExit && foundAboveExit) break;
-
+            
             dfs.push(coords + directionMap[Direction::UP]);
             dfs.push(coords + directionMap[Direction::LEFT]);
             dfs.push(coords + directionMap[Direction::DOWN]);
