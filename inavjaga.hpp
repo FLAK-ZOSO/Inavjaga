@@ -1,4 +1,4 @@
-#include "include/sista/sista.hpp"
+#include <sista/sista.hpp>
 #include "src/constants.hpp"
 #include "src/direction.hpp"
 #include "src/inventory.hpp"
