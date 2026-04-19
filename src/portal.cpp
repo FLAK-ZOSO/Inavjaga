@@ -8,8 +8,10 @@ Portal::Portal(sista::Coordinates coordinates) : Entity('&', coordinates, portal
 }
 void Portal::remove() {
     auto it = std::find_if(Portal::portals.begin(), Portal::portals.end(), [this](const std::shared_ptr<Portal>& p){ return p.get() == this; });
-    if (it != Portal::portals.end()) Portal::portals.erase(it);
+    std::shared_ptr<Portal> self;
+    if (it != Portal::portals.end()) self = *it;
     field->erasePawn(this);
+    if (it != Portal::portals.end()) Portal::portals.erase(it);
 }
 sista::ANSISettings Portal::portalStyle = {
     RGB_ROCKS_FOREGROUND,

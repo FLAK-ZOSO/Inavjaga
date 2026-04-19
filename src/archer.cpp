@@ -240,8 +240,10 @@ bool Archer::shoot(Direction direction) {
 }
 void Archer::die() {
     auto it = std::find_if(Archer::archers.begin(), Archer::archers.end(), [this](const std::shared_ptr<Archer>& p){ return p.get() == this; });
-    if (it != Archer::archers.end()) Archer::archers.erase(it);
+    std::shared_ptr<Archer> self;
+    if (it != Archer::archers.end()) self = *it;
     field->erasePawn(this);
+    if (it != Archer::archers.end()) Archer::archers.erase(it);
     {
         auto c = std::make_shared<Chest>(coordinates, Inventory{LOOT_ARCHER_CLAY, LOOT_ARCHER_BULLETS, LOOT_ARCHER_MEAT});
         Chest::chests.push_back(c);
@@ -250,8 +252,10 @@ void Archer::die() {
 }
 void Archer::remove() {
     auto it = std::find_if(Archer::archers.begin(), Archer::archers.end(), [this](const std::shared_ptr<Archer>& p){ return p.get() == this; });
-    if (it != Archer::archers.end()) Archer::archers.erase(it);
+    std::shared_ptr<Archer> self;
+    if (it != Archer::archers.end()) self = *it;
     field->erasePawn(this);
+    if (it != Archer::archers.end()) Archer::archers.erase(it);
 }
 std::bernoulli_distribution Archer::moving(ARCHER_MOVING_PROBABILITY);
 std::bernoulli_distribution Archer::shooting(ARCHER_SHOOTING_PROBABILITY);

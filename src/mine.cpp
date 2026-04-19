@@ -12,8 +12,10 @@ Mine::Mine(sista::Coordinates coordinates) : Entity('*', coordinates, mineStyle,
 }
 void Mine::remove() {
     auto it = std::find_if(Mine::mines.begin(), Mine::mines.end(), [this](const std::shared_ptr<Mine>& p){ return p.get() == this; });
-    if (it != Mine::mines.end()) Mine::mines.erase(it);
+    std::shared_ptr<Mine> self;
+    if (it != Mine::mines.end()) self = *it;
     field->erasePawn(this);
+    if (it != Mine::mines.end()) Mine::mines.erase(it);
 }
 void Mine::trigger() {
     if (this->triggered) return;

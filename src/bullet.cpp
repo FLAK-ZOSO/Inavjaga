@@ -16,8 +16,10 @@ Bullet::Bullet(sista::Coordinates coordinates, Direction direction) :
 }
 void Bullet::remove() {
     auto it = std::find_if(Bullet::bullets.begin(), Bullet::bullets.end(), [this](const std::shared_ptr<Bullet>& p){ return p.get() == this; });
-    if (it != Bullet::bullets.end()) Bullet::bullets.erase(it);
+    std::shared_ptr<Bullet> self;
+    if (it != Bullet::bullets.end()) self = *it;
     field->erasePawn(this);
+    if (it != Bullet::bullets.end()) Bullet::bullets.erase(it);
 }
 void Bullet::move() {
     sista::Coordinates next = this->coordinates + directionMap[direction];

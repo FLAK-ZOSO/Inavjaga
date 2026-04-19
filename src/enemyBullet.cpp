@@ -19,8 +19,10 @@ EnemyBullet::EnemyBullet(sista::Coordinates coordinates, Direction direction) :
 }
 void EnemyBullet::remove() {
     auto it = std::find_if(EnemyBullet::enemyBullets.begin(), EnemyBullet::enemyBullets.end(), [this](const std::shared_ptr<EnemyBullet>& p){ return p.get() == this; });
-    if (it != EnemyBullet::enemyBullets.end()) EnemyBullet::enemyBullets.erase(it);
+    std::shared_ptr<EnemyBullet> self;
+    if (it != EnemyBullet::enemyBullets.end()) self = *it;
     field->erasePawn(this);
+    if (it != EnemyBullet::enemyBullets.end()) EnemyBullet::enemyBullets.erase(it);
 }
 void EnemyBullet::move() {
     sista::Coordinates next = this->coordinates + directionMap[direction];

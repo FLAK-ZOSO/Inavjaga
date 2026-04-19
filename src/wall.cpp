@@ -16,8 +16,10 @@ Wall::Wall(sista::Coordinates coordinates, short int strength) :
 }
 void Wall::remove() {
     auto it = std::find_if(Wall::walls.begin(), Wall::walls.end(), [this](const std::shared_ptr<Wall>& p){ return p.get() == this; });
-    if (it != Wall::walls.end()) Wall::walls.erase(it);
+    std::shared_ptr<Wall> self;
+    if (it != Wall::walls.end()) self = *it;
     field->erasePawn(this);
+    if (it != Wall::walls.end()) Wall::walls.erase(it);
 }
 bool Wall::getHit() {
     if (--strength <= 0) {

@@ -179,9 +179,9 @@ void Worm::die() {
         WormBody* tail = tail_ptr.get();
         tail->die(); // removes itself from head->body and wormBodies
     }
+    field->erasePawn(this);
     auto it = std::find_if(Worm::worms.begin(), Worm::worms.end(), [this](const std::shared_ptr<Worm>& p){ return p.get() == this; });
     if (it != Worm::worms.end()) Worm::worms.erase(it);
-    field->erasePawn(this);
     {
     auto c = std::make_shared<Chest>(coordinates, Inventory{LOOT_WORM_HEAD_CLAY, LOOT_WORM_HEAD_BULLETS, LOOT_WORM_HEAD_MEAT});
     Chest::chests.push_back(c);
@@ -190,8 +190,10 @@ void Worm::die() {
 }
 void Worm::remove() {
     auto it = std::find_if(Worm::worms.begin(), Worm::worms.end(), [this](const std::shared_ptr<Worm>& p){ return p.get() == this; });
-    if (it != Worm::worms.end()) Worm::worms.erase(it);
+    std::shared_ptr<Worm> self;
+    if (it != Worm::worms.end()) self = *it;
     field->erasePawn(this);
+    if (it != Worm::worms.end()) Worm::worms.erase(it);
 }
 Direction Worm::options[2] = {Direction::LEFT, Direction::RIGHT};
 std::bernoulli_distribution Worm::turning(WORM_TURNING_PROBABILITY);
