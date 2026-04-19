@@ -26,7 +26,12 @@ void WormBody::die() {
     #endif
     // Free the pawn's coordinates first so we can place a chest there
     field->erasePawn(this);
-    field->addPrintPawn(std::make_shared<Chest>(drop, Inventory{0,1,0}));
+    // create chest and keep ownership in Chest::chests to ensure it stays alive
+    {
+        auto c = std::make_shared<Chest>(drop, Inventory{0,1,0});
+        Chest::chests.push_back(c);
+        field->addPrintPawn(c);
+    }
     auto wormBodyIt = std::find_if(WormBody::wormBodies.begin(), WormBody::wormBodies.end(), [this](const std::shared_ptr<WormBody>& p){ return p.get() == this; });
     if (wormBodyIt != WormBody::wormBodies.end()) WormBody::wormBodies.erase(wormBodyIt);
     auto head = this->head.lock();
