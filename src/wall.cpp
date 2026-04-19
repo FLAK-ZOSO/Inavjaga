@@ -101,8 +101,8 @@ bool Wall::getHit() {
     return false;
 }
 std::bernoulli_distribution Wall::wearing(WALL_WEARING_PROBABILITY);
-ANSI::Settings Wall::wallStyle = {
+sista::ANSISettings Wall::wallStyle = {
     RGB_ROCKS_FOREGROUND,
     RGB_ROCKS_BACKGROUND,
-    ANSI::Attribute::BRIGHT
+    sista::Attribute::BRIGHT
 };

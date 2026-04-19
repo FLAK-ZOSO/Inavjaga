@@ -5,8 +5,8 @@
 
 class Mine : public Entity {
 public:
-    static ANSI::Settings mineStyle;
-    static ANSI::Settings triggeredMineStyle;
+    static sista::ANSISettings mineStyle;
+    static sista::ANSISettings triggeredMineStyle;
     static std::vector<Mine*> mines;
     static std::bernoulli_distribution explosion;
     static std::uniform_int_distribution<int> mineDamage;

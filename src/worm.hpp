@@ -7,7 +7,7 @@
 class Worm; // Forward implicit declaration
 class WormBody : public Entity {
 public:
-    static ANSI::Settings wormBodyStyle;
+    static sista::ANSISettings wormBodyStyle;
     static std::vector<WormBody*> wormBodies;
     Worm* head;
 
@@ -20,7 +20,7 @@ public:
 /* Worm - represents a Worm but as a `sista::Pawn` it corresponds to the head */
 class Worm : public Entity {
 public:
-    static ANSI::Settings wormHeadStyle;
+    static sista::ANSISettings wormHeadStyle;
     static std::vector<Worm*> worms;
     static std::bernoulli_distribution turning;
     static std::bernoulli_distribution moving;

@@ -70,8 +70,8 @@ void EnemyBullet::move() {
         this->remove(); // Hit something and the situation was not handled
     }
 }
-ANSI::Settings EnemyBullet::enemyBulletStyle = {
-    ANSI::ForegroundColor::F_GREEN,
-    ANSI::BackgroundColor::B_BLACK,
-    ANSI::Attribute::BRIGHT
+sista::ANSISettings EnemyBullet::enemyBulletStyle = {
+    sista::ForegroundColor::F_GREEN,
+    sista::BackgroundColor::B_BLACK,
+    sista::Attribute::BRIGHT
 };

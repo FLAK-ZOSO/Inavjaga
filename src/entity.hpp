@@ -22,7 +22,7 @@ class Entity : public sista::Pawn {
 public:
     Type type;
 
-    Entity(char, sista::Coordinates, ANSI::Settings&, Type);
+    Entity(char, sista::Coordinates, sista::ANSISettings&, Type);
     virtual ~Entity() {}
     virtual void remove() = 0;
 };

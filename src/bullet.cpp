@@ -67,8 +67,8 @@ void Bullet::move() {
         this->remove(); // Hit something and the situation was not handled
     }
 }
-ANSI::Settings Bullet::bulletStyle = {
-    ANSI::ForegroundColor::F_MAGENTA,
-    ANSI::BackgroundColor::B_BLACK,
-    ANSI::Attribute::BRIGHT
+sista::ANSISettings Bullet::bulletStyle = {
+    sista::ForegroundColor::F_MAGENTA,
+    sista::BackgroundColor::B_BLACK,
+    sista::Attribute::BRIGHT
 };

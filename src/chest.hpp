@@ -5,7 +5,7 @@
 
 class Chest : public Entity {
 public:
-    static ANSI::Settings chestStyle;
+    static sista::ANSISettings chestStyle;
     static std::vector<Chest*> chests;
     Inventory inventory;
 

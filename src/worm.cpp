@@ -33,10 +33,10 @@ void WormBody::remove() {
     field->erasePawn(this);
     delete this;
 }
-ANSI::Settings WormBody::wormBodyStyle = {
-    ANSI::RGBColor(50, 0xff, 150),
-    ANSI::BackgroundColor::B_BLACK,
-    ANSI::Attribute::BRIGHT
+sista::ANSISettings WormBody::wormBodyStyle = {
+    sista::RGBColor(50, 0xff, 150),
+    sista::BackgroundColor::B_BLACK,
+    sista::Attribute::BRIGHT
 };
 
 Worm::Worm(sista::Coordinates coordinates) : Entity('H', coordinates, wormHeadStyle, Type::WORM_HEAD), hp(WORM_HEALTH_POINTS), collided(false) {
@@ -188,8 +188,8 @@ std::bernoulli_distribution Worm::spawning(WORM_SPAWNING_PROBABILITY);
 std::bernoulli_distribution Worm::eatingTail(WORM_EATING_TAIL_PROBABILITY);
 std::bernoulli_distribution Worm::eatingArcher(WORM_EATING_ARCHER_PROBABILITY);
 std::bernoulli_distribution Worm::clayRelease(CLAY_RELEASE_PROBABILITY);
-ANSI::Settings Worm::wormHeadStyle = {
-    ANSI::ForegroundColor::F_GREEN,
-    ANSI::BackgroundColor::B_BLACK,
-    ANSI::Attribute::RAPID_BLINK
+sista::ANSISettings Worm::wormHeadStyle = {
+    sista::ForegroundColor::F_GREEN,
+    sista::BackgroundColor::B_BLACK,
+    sista::Attribute::RAPID_BLINK
 };

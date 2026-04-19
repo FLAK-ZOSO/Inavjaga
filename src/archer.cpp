@@ -250,8 +250,8 @@ void Archer::remove() {
 std::bernoulli_distribution Archer::moving(ARCHER_MOVING_PROBABILITY);
 std::bernoulli_distribution Archer::shooting(ARCHER_SHOOTING_PROBABILITY);
 std::bernoulli_distribution Archer::spawning(ARCHER_SPAWNING_PROBABILITY);
-ANSI::Settings Archer::archerStyle = {
-    ANSI::ForegroundColor::F_CYAN,
-    ANSI::BackgroundColor::B_BLACK,
-    ANSI::Attribute::STRIKETHROUGH
+sista::ANSISettings Archer::archerStyle = {
+    sista::ForegroundColor::F_CYAN,
+    sista::BackgroundColor::B_BLACK,
+    sista::Attribute::STRIKETHROUGH
 };

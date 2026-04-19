@@ -11,8 +11,8 @@ void Chest::remove() {
     field->erasePawn(this);
     delete this;
 }
-ANSI::Settings Chest::chestStyle = {
-    ANSI::RGBColor(193, 201, 104),
+sista::ANSISettings Chest::chestStyle = {
+    sista::RGBColor(193, 201, 104),
     RGB_BLACK,
-    ANSI::Attribute::REVERSE
+    sista::Attribute::REVERSE
 };

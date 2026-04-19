@@ -5,7 +5,7 @@
 
 class Wall : public Entity {
 public:
-    static ANSI::Settings wallStyle;
+    static sista::ANSISettings wallStyle;
     static std::vector<Wall*> walls;
     static std::bernoulli_distribution wearing;
     short int strength;

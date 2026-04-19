@@ -60,13 +60,13 @@ void Mine::explode() {
 }
 std::bernoulli_distribution Mine::explosion(MINE_EXPLOSION_IN_FRAME_PROBABILITY);
 std::uniform_int_distribution<int> Mine::mineDamage(MINE_MINIMUM_DAMAGE, MINE_MAXIMUM_DAMAGE);
-ANSI::Settings Mine::mineStyle = {
-    ANSI::RGBColor(200, 100, 200),
+sista::ANSISettings Mine::mineStyle = {
+    sista::RGBColor(200, 100, 200),
     RGB_ROCKS_FOREGROUND,
-    ANSI::Attribute::BRIGHT
+    sista::Attribute::BRIGHT
 };
-ANSI::Settings Mine::triggeredMineStyle = {
+sista::ANSISettings Mine::triggeredMineStyle = {
     RGB_BLACK,
-    ANSI::RGBColor(0xff, 0, 0),
-    ANSI::Attribute::BLINK
+    sista::RGBColor(0xff, 0, 0),
+    sista::Attribute::BLINK
 };

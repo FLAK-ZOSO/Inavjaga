@@ -11,8 +11,8 @@ void Portal::remove() {
     field->erasePawn(this);
     delete this;
 }
-ANSI::Settings Portal::portalStyle = {
+sista::ANSISettings Portal::portalStyle = {
     RGB_ROCKS_FOREGROUND,
     RGB_ROCKS_BACKGROUND,
-    ANSI::Attribute::FAINT
+    sista::Attribute::FAINT
 };

@@ -99,8 +99,8 @@ void Player::shoot(Direction direction) {
             return;
     }
 }
-ANSI::Settings Player::playerStyle = {
-    ANSI::ForegroundColor::F_RED,
-    ANSI::BackgroundColor::B_BLACK,
-    ANSI::Attribute::BRIGHT
+sista::ANSISettings Player::playerStyle = {
+    sista::ForegroundColor::F_RED,
+    sista::BackgroundColor::B_BLACK,
+    sista::Attribute::BRIGHT
 };

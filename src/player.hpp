@@ -12,7 +12,7 @@ extern sista::SwappableField* field;
 
 class Player : public Entity {
 public:
-    static ANSI::Settings playerStyle;
+    static sista::ANSISettings playerStyle;
     static Player* player;
     enum Mode {
         COLLECT, BULLET,

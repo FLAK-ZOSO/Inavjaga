@@ -6,7 +6,7 @@
 
 class Archer : public Entity {
 public:
-    static ANSI::Settings archerStyle;
+    static sista::ANSISettings archerStyle;
     static std::vector<Archer*> archers;
     static std::bernoulli_distribution shooting;
     static std::bernoulli_distribution moving;

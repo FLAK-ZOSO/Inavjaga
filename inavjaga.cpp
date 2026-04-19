@@ -6,6 +6,7 @@
 #include <chrono>
 #include <mutex>
 #include <stack>
+#include <iostream>
 
 Player* Player::player;
 std::vector<Wall*> Wall::walls;
@@ -24,7 +25,7 @@ sista::Border border(
     '@', {
         RGB_ROCKS_FOREGROUND,
         RGB_ROCKS_BACKGROUND,
-        ANSI::Attribute::BRIGHT
+        sista::Attribute::BRIGHT
     }
 );
 std::mutex streamMutex;
@@ -40,7 +41,7 @@ int main(int argc, char* argv[]) {
         term_echooff();
     #endif
     std::ios_base::sync_with_stdio(false);
-    ANSI::reset(); // Reset the settings
+    sista::resetAnsi(); // Reset the settings
     srand(time(0)); // Seed the random number generator
 
     sista::SwappableField field_(WIDTH, HEIGHT);
@@ -205,7 +206,7 @@ int main(int argc, char* argv[]) {
     deallocateAll();
     th.join();
     field->clear();
-    cursor.set(72, 0); // Move the cursor to the bottom of the screen, so the terminal is not left in a weird state
+    cursor.goTo(72, 0); // Move the cursor to the bottom of the screen, so the terminal is not left in a weird state
     std::this_thread::sleep_for(std::chrono::seconds(1)); // Give the time to see the final screen
     flushInput();
     #if __linux__
@@ -253,23 +254,23 @@ void intro() {
         std::cout << "Use ctrl+<minus> and ctrl+<plus> or ctrl+<mouse-scroll> to resize your terminal.\n";
         std::cout << "Maximize your terminal window for an optimal view on the field, then enter any key to proceed.\n";
         field->print(border);
-        ANSI::reset();
-        cursor.set(8, (unsigned short)(WIDTH / 2.1));
+        sista::resetAnsi();
+        cursor.goTo(8, (unsigned short)(WIDTH / 2.1));
         std::cout << "Inävjaga";
-        cursor.set(TUNNEL_UNIT * 3 + 7, TUNNEL_UNIT * 2 + 2);
+        cursor.goTo(TUNNEL_UNIT * 3 + 7, TUNNEL_UNIT * 2 + 2);
         Player::playerStyle.apply();
         std::cout << "Inävjaga v" << VERSION;
-        cursor.set(TUNNEL_UNIT * 3 + 7, (unsigned short)(WIDTH / 2.6));
-        ANSI::reset();
-        ANSI::setAttribute(ANSI::Attribute::ITALIC);
-        ANSI::setAttribute(ANSI::Attribute::FAINT);
+        cursor.goTo(TUNNEL_UNIT * 3 + 7, (unsigned short)(WIDTH / 2.6));
+        sista::resetAnsi();
+        sista::setAttribute(sista::Attribute::ITALIC);
+        sista::setAttribute(sista::Attribute::FAINT);
         std::cout << " originally by ";
-        ANSI::reset();
+        sista::resetAnsi();
         Player::playerStyle.apply();
         std::cout << AUTHOR << "     " << DATE;
-        ANSI::reset();
-        cursor.set(TUNNEL_UNIT * 3 + 9, (unsigned short)(WIDTH / 3.5));
-        ANSI::setAttribute(ANSI::Attribute::UNDERSCORE);
+        sista::resetAnsi();
+        cursor.goTo(TUNNEL_UNIT * 3 + 9, (unsigned short)(WIDTH / 3.5));
+        sista::setAttribute(sista::Attribute::UNDERSCORE);
         std::cout << "https://github.com/FLAK-ZOSO/Inavjaga";
         std::cout << std::flush;
 
@@ -285,18 +286,18 @@ void tutorial() {
     field->print(border);
     printSideInstructions(0);
 
-    cursor.set(TUNNEL_UNIT * 3 + 3 + 1, 4);
-    ANSI::reset();
+    cursor.goTo(TUNNEL_UNIT * 3 + 3 + 1, 4);
+    sista::resetAnsi();
     std::cout << "When you want to skip the tutorial, click 'n' at any point";
-    cursor.set(TUNNEL_UNIT * 3 + 3 + 2, 4);
+    cursor.goTo(TUNNEL_UNIT * 3 + 3 + 2, 4);
     std::cout << "To disable it, set TUTORIAL to 0 in constants.hpp and recompile";
 
-    cursor.set(TUNNEL_UNIT * 4 + 4, 4);
-    ANSI::reset();
+    cursor.goTo(TUNNEL_UNIT * 4 + 4, 4);
+    sista::resetAnsi();
     std::cout << "You are the ";
     Player::playerStyle.apply();
     std::cout << "$ player";
-    ANSI::reset();
+    sista::resetAnsi();
     std::cout << ", try moving around a bit" << std::endl;
 
     char input_;
@@ -318,12 +319,12 @@ void tutorial() {
     }
     field->addPrintPawn(new Archer({Player::player->getCoordinates().y, WIDTH - 3 * TUNNEL_UNIT - 1}));
 
-    cursor.set(TUNNEL_UNIT * 5 + 3 + 1, 4);
-    ANSI::reset();
+    cursor.goTo(TUNNEL_UNIT * 5 + 3 + 1, 4);
+    sista::resetAnsi();
     std::cout << "An ";
     Archer::archerStyle.apply();
     std::cout << "Archer";
-    ANSI::reset();
+    sista::resetAnsi();
     std::cout << "! Enter bullet mode and shoot it!" << std::endl;
 
     flushInput();
@@ -352,12 +353,12 @@ void tutorial() {
         std::cout << std::flush;
     }
 
-    cursor.set(TUNNEL_UNIT * 6 + 3 + 1, 4);
-    ANSI::reset();
+    cursor.goTo(TUNNEL_UNIT * 6 + 3 + 1, 4);
+    sista::resetAnsi();
     std::cout << "You can loot its ";
     Chest::chestStyle.apply();
     std::cout << "Chest";
-    ANSI::reset();
+    sista::resetAnsi();
     std::cout << ". Enter collect mode and pick it up." << std::endl;
 
     while (!Chest::chests.empty()) {
@@ -376,31 +377,31 @@ void tutorial() {
         std::cout << std::flush;
     }
 
-    cursor.set(TUNNEL_UNIT * 7 + 3, 4);
-    ANSI::reset();
+    cursor.goTo(TUNNEL_UNIT * 7 + 3, 4);
+    sista::resetAnsi();
     std::cout << "Each wall layer can be traversed by you through ";
     Portal::portalStyle.apply();
     std::cout << "& Portals";
-    ANSI::reset();
+    sista::resetAnsi();
     std::cout << std::flush;
     std::this_thread::sleep_for(std::chrono::seconds(1));
-    cursor.set(TUNNEL_UNIT * 7 + 3 + 1, 4);
+    cursor.goTo(TUNNEL_UNIT * 7 + 3 + 1, 4);
     std::cout << "You might also encounter ";
     WormBody::wormBodyStyle.apply();
     std::cout << ">>>>>>>H Snakes";
-    ANSI::reset();
+    sista::resetAnsi();
     std::cout << ", I hope you have good aim.";
     std::cout << std::flush;
     std::this_thread::sleep_for(std::chrono::seconds(3));
 
-    cursor.set(TUNNEL_UNIT * 8 + 4, TUNNEL_UNIT * 2 + 3);
-    ANSI::reset();
+    cursor.goTo(TUNNEL_UNIT * 8 + 4, TUNNEL_UNIT * 2 + 3);
+    sista::resetAnsi();
     std::cout << "Protect the red area. And don't starve: you consume meat.";
     
-    ANSI::Settings highlight(
-        ANSI::ForegroundColor::F_RED,
-        ANSI::BackgroundColor::B_RED,
-        ANSI::Attribute::BLINK
+    sista::ANSISettings highlight(
+        sista::ForegroundColor::F_RED,
+        sista::BackgroundColor::B_RED,
+        sista::Attribute::BLINK
     );
     std::vector<sista::Pawn*> highlightPawns;
     for (int i = 0; i < TUNNEL_UNIT * 2; i++) {
@@ -413,10 +414,10 @@ void tutorial() {
     std::cout << std::flush;
     std::this_thread::sleep_for(std::chrono::seconds(3));
     
-    cursor.set(TUNNEL_UNIT * 8 + 3 + 4, WIDTH / 3);
-    ANSI::reset();
-    ANSI::setAttribute(ANSI::Attribute::ITALIC);
-    ANSI::setAttribute(ANSI::Attribute::BLINK);
+    cursor.goTo(TUNNEL_UNIT * 8 + 3 + 4, WIDTH / 3);
+    sista::resetAnsi();
+    sista::setAttribute(sista::Attribute::ITALIC);
+    sista::setAttribute(sista::Attribute::BLINK);
     std::cout << "Press any key to play Inävjaga...";
     std::cout << std::flush;
     std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -440,18 +441,18 @@ void tutorial() {
 
 void printSideInstructions(int i) {
     // Print the inventory
-    ANSI::reset();
-    cursor.set(3, WIDTH + 10);
-    ANSI::setAttribute(ANSI::Attribute::BRIGHT);
+    sista::resetAnsi();
+    cursor.goTo(3, WIDTH + 10);
+    sista::setAttribute(sista::Attribute::BRIGHT);
     std::cout << "Inventory\n";
-    ANSI::resetAttribute(ANSI::Attribute::BRIGHT);
-    cursor.set(4, WIDTH + 10);
+    sista::resetAnsiAttribute(sista::Attribute::BRIGHT);
+    cursor.goTo(4, WIDTH + 10);
     std::cout << "Clay: " << Player::player->inventory.clay << "   \n";
-    cursor.set(5, WIDTH + 10);
+    cursor.goTo(5, WIDTH + 10);
     std::cout << "Bullets: " << Player::player->inventory.bullets << "   \n";
-    cursor.set(6, WIDTH + 10);
+    cursor.goTo(6, WIDTH + 10);
     std::cout << "Meat: " << Player::player->inventory.meat << "   \n";
-    cursor.set(7, WIDTH + 10);
+    cursor.goTo(7, WIDTH + 10);
     std::cout << "Mode: ";
     switch (Player::player->mode) {
         case Player::Mode::COLLECT:
@@ -471,38 +472,38 @@ void printSideInstructions(int i) {
             break;
     }
     std::cout << "      ";
-    cursor.set(10, WIDTH + 10);
-    ANSI::setAttribute(ANSI::Attribute::BRIGHT);
+    cursor.goTo(10, WIDTH + 10);
+    sista::setAttribute(sista::Attribute::BRIGHT);
     std::cout << "Time survived: " << i << "    \n";
-    ANSI::resetAttribute(ANSI::Attribute::BRIGHT);
-    cursor.set(11, WIDTH + 10);
+    sista::resetAnsiAttribute(sista::Attribute::BRIGHT);
+    cursor.goTo(11, WIDTH + 10);
 
     if (i == 0) printKeys();
 }
 void printKeys() {
-    cursor.set(12, WIDTH + 10);
-    ANSI::setAttribute(ANSI::Attribute::BRIGHT);
+    cursor.goTo(12, WIDTH + 10);
+    sista::setAttribute(sista::Attribute::BRIGHT);
     std::cout << "Instructions\n";
-    ANSI::resetAttribute(ANSI::Attribute::BRIGHT);
-    cursor.set(13, WIDTH + 10);
+    sista::resetAnsiAttribute(sista::Attribute::BRIGHT);
+    cursor.goTo(13, WIDTH + 10);
     std::cout << "Move: \x1b[35mw\x1b[37m | \x1b[35ma\x1b[37m | \x1b[35ms\x1b[37m | \x1b[35md\x1b[37m\n";
-    cursor.set(14, WIDTH+10);
+    cursor.goTo(14, WIDTH+10);
     std::cout << "Act: \x1b[35mi\x1b[37m | \x1b[35mj\x1b[37m | \x1b[35mk\x1b[37m | \x1b[35ml\x1b[37m\n";
-    cursor.set(16, WIDTH + 10);
+    cursor.goTo(16, WIDTH + 10);
     std::cout << "Collect mode: \x1b[35mc\x1b[37m\n";
-    cursor.set(17, WIDTH + 10);
+    cursor.goTo(17, WIDTH + 10);
     std::cout << "Bullet mode: \x1b[35mb\x1b[37m\n";
-    cursor.set(18, WIDTH + 10);
+    cursor.goTo(18, WIDTH + 10);
     std::cout << "Dump Chest mode: \x1b[35me\x1b[37m\n";
-    cursor.set(19, WIDTH + 10);
+    cursor.goTo(19, WIDTH + 10);
     std::cout << "Place Trap mode: \x1b[35mt\x1b[37m\n";
-    cursor.set(20, WIDTH + 10);
+    cursor.goTo(20, WIDTH + 10);
     std::cout << "Place Mine mode: \x1b[35mm\x1b[37m | \x1b[35m*\x1b[37m\n";
-    cursor.set(22, WIDTH + 10);
+    cursor.goTo(22, WIDTH + 10);
     std::cout << "Speedup mode: \x1b[35m+\x1b[37m | \x1b[35m-\x1b[37m\n";
-    cursor.set(23, WIDTH + 10);
+    cursor.goTo(23, WIDTH + 10);
     std::cout << "Pause or resume: \x1b[35m.\x1b[37m | \x1b[35mp\x1b[37m\n";
-    cursor.set(24, WIDTH + 10);
+    cursor.goTo(24, WIDTH + 10);
     std::cout << "Quit: \x1b[35mQ\x1b[37m\n";
 }
 void reprint() {
@@ -694,15 +695,15 @@ void act(char input_) {
 }
 
 void printEndInformation(EndReason endReason) {
-    cursor.set(HEIGHT, WIDTH + 10);
+    cursor.goTo(HEIGHT, WIDTH + 10);
     
-    ANSI::reset();
-    ANSI::setAttribute(ANSI::Attribute::BLINK);
+    sista::resetAnsi();
+    sista::setAttribute(sista::Attribute::BLINK);
     switch (endReason) {
         case EndReason::EATEN:
             std::cout << "You have been eaten by a ";
             Worm::wormHeadStyle.apply();
-            ANSI::setAttribute(ANSI::Attribute::BLINK);
+            sista::setAttribute(sista::Attribute::BLINK);
             std::cout << "WORM";
             break;
         case EndReason::QUIT:
@@ -711,13 +712,13 @@ void printEndInformation(EndReason endReason) {
         case EndReason::SHOT:
             std::cout << "You have been shot with a ";
             EnemyBullet::enemyBulletStyle.apply();
-            ANSI::setAttribute(ANSI::Attribute::BLINK);
+            sista::setAttribute(sista::Attribute::BLINK);
             std::cout << "BULLET";
             break;
         case EndReason::STABBED:
             std::cout << "You have been stabbed by an ";
             Archer::archerStyle.apply();
-            ANSI::setAttribute(ANSI::Attribute::BLINK);
+            sista::setAttribute(sista::Attribute::BLINK);
             std::cout << "ARCHER";
             break;
         case EndReason::STARVED:

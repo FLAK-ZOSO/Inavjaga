@@ -5,7 +5,7 @@
 
 class Bullet : public Entity {
 public:
-    static ANSI::Settings bulletStyle;
+    static sista::ANSISettings bulletStyle;
     static std::vector<Bullet*> bullets;
     Direction direction;
     bool collided = false;

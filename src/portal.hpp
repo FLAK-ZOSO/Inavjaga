@@ -4,7 +4,7 @@
 
 class Portal : public Entity {
 public:
-    static ANSI::Settings portalStyle;
+    static sista::ANSISettings portalStyle;
     static std::vector<Portal*> portals;
     Portal* exit; // The matching portal
 
