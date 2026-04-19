@@ -12,12 +12,12 @@ extern sista::SwappableField* field;
 
 Bullet::Bullet(sista::Coordinates coordinates, Direction direction) :
     Entity(directionSymbol[direction], coordinates, bulletStyle, Type::BULLET), direction(direction), collided(false) {
-    Bullet::bullets.push_back(this);
+    // ownership moved to creator via std::shared_ptr; do not push here
 }
 void Bullet::remove() {
-    Bullet::bullets.erase(std::find(Bullet::bullets.begin(), Bullet::bullets.end(), this));
+    auto it = std::find_if(Bullet::bullets.begin(), Bullet::bullets.end(), [this](const std::shared_ptr<Bullet>& p){ return p.get() == this; });
+    if (it != Bullet::bullets.end()) Bullet::bullets.erase(it);
     field->erasePawn(this);
-    delete this;
 }
 void Bullet::move() {
     sista::Coordinates next = this->coordinates + directionMap[direction];

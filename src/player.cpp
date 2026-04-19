@@ -16,7 +16,9 @@ Player::Player(sista::Coordinates coordinates) : Entity('$', coordinates, player
 Player::Player() : Entity('$', {0, 0}, playerStyle, Type::PLAYER), mode(Player::Mode::COLLECT), inventory(INITIAL_INVENTORY) {}
 void Player::remove() {
     field->erasePawn(this);
-    delete this;
+    if (Player::player.get() == this) {
+        Player::player.reset();
+    }
 }
 void Player::move(Direction direction) {
     sista::Coordinates next = this->coordinates + directionMap[direction];
@@ -29,9 +31,11 @@ void Player::move(Direction direction) {
         switch (entity->type) {
             case Type::PORTAL: {
                 Portal* portal = (Portal*)entity;
-                sista::Coordinates landing = portal->exit->getCoordinates() + directionMap[direction];
-                if (field->isFree(landing)) {
-                    field->movePawn(this, landing);
+                if (auto exitPtr = portal->exit.lock()) {
+                    sista::Coordinates landing = exitPtr->getCoordinates() + directionMap[direction];
+                    if (field->isFree(landing)) {
+                        field->movePawn(this, landing);
+                    }
                 }
                 break;
             }
@@ -76,24 +80,33 @@ void Player::shoot(Direction direction) {
     switch (this->mode) {
         case Mode::BULLET:
             if (--inventory.bullets >= 0) {
-                field->addPrintPawn(new Bullet(target, direction));
+                {
+                    auto b = std::make_shared<Bullet>(target, direction);
+                    Bullet::bullets.push_back(b);
+                    field->addPrintPawn(b);
+                }
             }
             inventory.bullets = std::max(inventory.bullets, (short)0);
             break;
         case Mode::DUMPCHEST:
             if (inventory.clay > 0 || inventory.bullets > 0) {
-                field->addPrintPawn(new Chest(target, {
-                    this->inventory.clay,
-                    this->inventory.bullets,
-                    0 // Meat cannot be deposited
-                }));
+                {
+                    // Meat cannot be deposited, so we set it to 0 in the chest and leave the meat to the player
+                    auto c = std::make_shared<Chest>(target, Inventory{this->inventory.clay, this->inventory.bullets, 0});
+                    Chest::chests.push_back(c);
+                    field->addPrintPawn(c);
+                }
                 this->inventory = {0, 0, this->inventory.meat};
             }
             break;
         case Mode::MINE:
             if (this->inventory.containsAtLeast(COST_OF_MINE)) {
                 this->inventory -= COST_OF_MINE;
-                field->addPrintPawn(new Mine(target));
+                {
+                    auto m = std::make_shared<Mine>(target);
+                    Mine::mines.push_back(m);
+                    field->addPrintPawn(m);
+                }
             }
             break;
         default:

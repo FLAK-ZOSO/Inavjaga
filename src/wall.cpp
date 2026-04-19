@@ -12,12 +12,12 @@ extern sista::SwappableField* field;
 
 Wall::Wall(sista::Coordinates coordinates, short int strength) :
     Entity('#', coordinates, wallStyle, Type::WALL), strength(strength) {
-    Wall::walls.push_back(this);
+    // ownership moved to creator via std::shared_ptr; do not push here
 }
 void Wall::remove() {
-    Wall::walls.erase(std::find(Wall::walls.begin(), Wall::walls.end(), this));
+    auto it = std::find_if(Wall::walls.begin(), Wall::walls.end(), [this](const std::shared_ptr<Wall>& p){ return p.get() == this; });
+    if (it != Wall::walls.end()) Wall::walls.erase(it);
     field->erasePawn(this);
-    delete this;
 }
 bool Wall::getHit() {
     if (--strength <= 0) {

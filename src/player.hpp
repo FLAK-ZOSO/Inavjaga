@@ -13,7 +13,7 @@ extern sista::SwappableField* field;
 class Player : public Entity {
 public:
     static sista::ANSISettings playerStyle;
-    static Player* player;
+    static std::shared_ptr<Player> player;
     enum Mode {
         COLLECT, BULLET,
         DUMPCHEST, TRAP, MINE

@@ -4,12 +4,12 @@
 extern sista::SwappableField* field;
 
 Portal::Portal(sista::Coordinates coordinates) : Entity('&', coordinates, portalStyle, Type::PORTAL) {
-    Portal::portals.push_back(this);
+    // ownership moved to creator via std::shared_ptr; do not push here
 }
 void Portal::remove() {
-    Portal::portals.erase(std::find(Portal::portals.begin(), Portal::portals.end(), this));
+    auto it = std::find_if(Portal::portals.begin(), Portal::portals.end(), [this](const std::shared_ptr<Portal>& p){ return p.get() == this; });
+    if (it != Portal::portals.end()) Portal::portals.erase(it);
     field->erasePawn(this);
-    delete this;
 }
 sista::ANSISettings Portal::portalStyle = {
     RGB_ROCKS_FOREGROUND,

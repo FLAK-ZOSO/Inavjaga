@@ -2,14 +2,15 @@
 #include "direction.hpp"
 #include "entity.hpp"
 #include <random>
+#include <memory>
 #pragma once
 
 class Worm; // Forward implicit declaration
 class WormBody : public Entity {
 public:
     static sista::ANSISettings wormBodyStyle;
-    static std::vector<WormBody*> wormBodies;
-    Worm* head;
+    static std::vector<std::shared_ptr<WormBody>> wormBodies;
+    std::weak_ptr<Worm> head;
 
     WormBody(sista::Coordinates, Direction);
     void remove() override;
@@ -18,10 +19,10 @@ public:
 };
 
 /* Worm - represents a Worm but as a `sista::Pawn` it corresponds to the head */
-class Worm : public Entity {
+class Worm : public Entity, public std::enable_shared_from_this<Worm> {
 public:
     static sista::ANSISettings wormHeadStyle;
-    static std::vector<Worm*> worms;
+    static std::vector<std::shared_ptr<Worm>> worms;
     static std::bernoulli_distribution turning;
     static std::bernoulli_distribution moving;
     static std::bernoulli_distribution spawning;
@@ -29,7 +30,7 @@ public:
     static std::bernoulli_distribution eatingTail;
     static std::bernoulli_distribution clayRelease;
     static Direction options[2];
-    std::vector<WormBody*> body;
+    std::vector<std::shared_ptr<WormBody>> body;
     Direction direction;
     bool collided;
     short int hp;

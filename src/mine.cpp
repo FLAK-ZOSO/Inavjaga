@@ -8,12 +8,12 @@ extern sista::SwappableField* field;
 extern std::mt19937 rng;
 
 Mine::Mine(sista::Coordinates coordinates) : Entity('*', coordinates, mineStyle, Type::MINE), triggered(false) {
-    Mine::mines.push_back(this);
+    // ownership moved to creator via std::shared_ptr; do not push here
 }
 void Mine::remove() {
-    Mine::mines.erase(std::find(Mine::mines.begin(), Mine::mines.end(), this));
+    auto it = std::find_if(Mine::mines.begin(), Mine::mines.end(), [this](const std::shared_ptr<Mine>& p){ return p.get() == this; });
+    if (it != Mine::mines.end()) Mine::mines.erase(it);
     field->erasePawn(this);
-    delete this;
 }
 void Mine::trigger() {
     if (this->triggered) return;

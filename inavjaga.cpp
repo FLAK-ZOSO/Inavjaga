@@ -9,16 +9,16 @@
 #include <stack>
 #include <iostream>
 
-Player* Player::player;
-std::vector<Wall*> Wall::walls;
-std::vector<Bullet*> Bullet::bullets;
-std::vector<EnemyBullet*> EnemyBullet::enemyBullets;
-std::vector<Chest*> Chest::chests;
-std::vector<Portal*> Portal::portals;
-std::vector<Mine*> Mine::mines;
-std::vector<Archer*> Archer::archers;
-std::vector<WormBody*> WormBody::wormBodies;
-std::vector<Worm*> Worm::worms;
+std::shared_ptr<Player> Player::player;
+std::vector<std::shared_ptr<Wall>> Wall::walls;
+std::vector<std::shared_ptr<Bullet>> Bullet::bullets;
+std::vector<std::shared_ptr<EnemyBullet>> EnemyBullet::enemyBullets;
+std::vector<std::shared_ptr<Chest>> Chest::chests;
+std::vector<std::shared_ptr<Portal>> Portal::portals;
+std::vector<std::shared_ptr<Mine>> Mine::mines;
+std::vector<std::shared_ptr<Archer>> Archer::archers;
+std::vector<std::shared_ptr<WormBody>> WormBody::wormBodies;
+std::vector<std::shared_ptr<Worm>> Worm::worms;
 
 sista::SwappableField* field;
 sista::Cursor cursor;
@@ -48,7 +48,8 @@ int main(int argc, char* argv[]) {
     sista::SwappableField field_(WIDTH, HEIGHT);
     field = &field_;
     generateTunnels();
-    Player::player = new Player(SPAWN_COORDINATES);
+    sista::Coordinates spawn = SPAWN_COORDINATES;
+    Player::player = std::make_shared<Player>(spawn);
     Player::player->mode = Player::Mode::BULLET;
     field->addPawn(Player::player);
     #if INTRO
@@ -74,13 +75,13 @@ int main(int argc, char* argv[]) {
             lastDeathFrame = i;
             sista::Coordinates deathCoordinates = Player::player->getCoordinates();
             sista::Coordinates respawnCoordinates = RESPAWN_COORDINATES;
-            field->movePawn(Player::player, respawnCoordinates);
+            field->movePawn(Player::player.get(), respawnCoordinates);
             #if DROP_INVENTORY_ON_DEATH
-            field->addPrintPawn(new Chest(deathCoordinates, {
-                Player::player->inventory.clay,
-                Player::player->inventory.bullets,
-                0
-            }));
+            {
+                auto c = std::make_shared<Chest>(deathCoordinates, Inventory{Player::player->inventory.clay, Player::player->inventory.bullets, 0});
+                Chest::chests.push_back(c);
+                field->addPrintPawn(c);
+            }
             #endif
             Player::player->inventory.clay = 0;
             Player::player->inventory.bullets = 0;
@@ -98,32 +99,43 @@ int main(int argc, char* argv[]) {
         #endif
         std::lock_guard<std::mutex> lock(streamMutex); // Lock stays until scope ends
         for (int k = 0; k < BULLET_SPEED; k++) {
+            // move player bullets
             for (unsigned j = 0; j < Bullet::bullets.size(); j++) {
-                Bullet* bullet = Bullet::bullets[j];
+                Bullet* bullet = Bullet::bullets[j].get();
                 if (bullet == nullptr) continue;
                 if (bullet->collided) continue;
                 bullet->move();
             }
-            for (Bullet* bullet : Bullet::bullets) {
-                if (bullet->collided) {
-                    bullet->remove();
+            // collect collided player bullets, then remove them (safe even if remove() mutates Bullet::bullets)
+            {
+                std::vector<std::shared_ptr<Bullet>> to_remove;
+                for (auto &bp : Bullet::bullets) {
+                    Bullet* bullet = bp.get();
+                    if (bullet && bullet->collided) to_remove.push_back(bp);
                 }
+                for (auto &bp : to_remove) bp->remove();
             }
+
+            // move enemy bullets
             for (unsigned j = 0; j < EnemyBullet::enemyBullets.size(); j++) {
-                EnemyBullet* bullet = EnemyBullet::enemyBullets[j];
+                EnemyBullet* bullet = EnemyBullet::enemyBullets[j].get();
                 if (bullet == nullptr) continue;
                 if (bullet->collided) continue;
                 bullet->move();
             }
-            for (EnemyBullet* bullet : EnemyBullet::enemyBullets) {
-                if (bullet->collided) {
-                    bullet->remove();
+            // collect collided enemy bullets, then remove them
+            {
+                std::vector<std::shared_ptr<EnemyBullet>> to_remove;
+                for (auto &bp : EnemyBullet::enemyBullets) {
+                    EnemyBullet* bullet = bp.get();
+                    if (bullet && bullet->collided) to_remove.push_back(bp);
                 }
+                for (auto &bp : to_remove) bp->remove();
             }
         }
         for (unsigned j = 0; j < Mine::mines.size(); j++) {
             if (j >= Mine::mines.size()) break;
-            Mine* mine = Mine::mines[j];
+            Mine* mine = Mine::mines[j].get();
             if (mine->triggered) {
                 if (Mine::explosion(rng)) {
                     mine->explode();
@@ -139,7 +151,7 @@ int main(int argc, char* argv[]) {
             }
         }
         for (unsigned j = 0; j < Worm::worms.size(); j++) {
-            Worm* worm = Worm::worms[j];
+            Worm* worm = Worm::worms[j].get();
             if (worm == nullptr) continue;
             if (worm->collided) continue;
             if (Worm::turning(rng)) {
@@ -149,14 +161,15 @@ int main(int argc, char* argv[]) {
                 worm->move();
             }
         }
-        for (Worm* worm : Worm::worms) {
-            if (worm->collided) {
+        for (auto &wp : Worm::worms) {
+            Worm* worm = wp.get();
+            if (worm && worm->collided) {
                 worm->die();
             }
         }
         for (unsigned j = 0; j < Mine::mines.size(); j++) {
             if (j >= Mine::mines.size()) break;
-            Mine* mine = Mine::mines[j];
+            Mine* mine = Mine::mines[j].get();
             if (!mine->triggered) {
                 for (int k=-MINE_SENSITIVITY_RADIUS; k<=MINE_SENSITIVITY_RADIUS; k++) {
                     for (int h=-MINE_SENSITIVITY_RADIUS; h<=MINE_SENSITIVITY_RADIUS; h++) {
@@ -318,7 +331,11 @@ void tutorial() {
         }
         std::cout << std::flush;
     }
-    field->addPrintPawn(new Archer({Player::player->getCoordinates().y, WIDTH - 3 * TUNNEL_UNIT - 1}));
+    {
+        auto a = std::make_shared<Archer>(sista::Coordinates{Player::player->getCoordinates().y, (unsigned short)(WIDTH - 3 * TUNNEL_UNIT - 1)});
+        Archer::archers.push_back(a);
+        field->addPrintPawn(a);
+    }
 
     cursor.goTo(TUNNEL_UNIT * 5 + 3 + 1, 4);
     sista::resetAnsi();
@@ -404,10 +421,10 @@ void tutorial() {
         sista::BackgroundColor::RED,
         sista::Attribute::BLINK
     );
-    std::vector<sista::Pawn*> highlightPawns;
+    std::vector<std::shared_ptr<sista::Pawn>> highlightPawns;
     for (int i = 0; i < TUNNEL_UNIT * 2; i++) {
         for (int j = WIDTH - TUNNEL_UNIT * 2; j < WIDTH; j++) {
-            sista::Pawn* pawn = new sista::Pawn(' ', {i, j}, highlight);
+            auto pawn = std::make_shared<sista::Pawn>(' ', sista::Coordinates{(unsigned short)i, (unsigned short)j}, highlight);
             highlightPawns.push_back(pawn);
             field->addPrintPawn(pawn);
         }
@@ -431,8 +448,7 @@ void tutorial() {
     #endif
 
     while (!highlightPawns.empty()) {
-        field->erasePawn(highlightPawns[highlightPawns.size() - 1]);
-        delete highlightPawns.back();
+        field->erasePawn(highlightPawns.back().get());
         highlightPawns.pop_back();
     }
 
@@ -526,10 +542,12 @@ void generateTunnels() {
                     abovePortalCoordinates = {row + TUNNEL_UNIT * 2, portalCoordinate};
                     belowPortalCoordinates = {row + TUNNEL_UNIT * 3 - 1, portalCoordinate};
                 } while (!field->isFree(abovePortalCoordinates) || !field->isFree(belowPortalCoordinates));
-                Portal* abovePortal = new Portal(abovePortalCoordinates);
-                Portal* belowPortal = new Portal(belowPortalCoordinates);
+                auto abovePortal = std::make_shared<Portal>(abovePortalCoordinates);
+                auto belowPortal = std::make_shared<Portal>(belowPortalCoordinates);
                 abovePortal->exit = belowPortal;
                 belowPortal->exit = abovePortal;
+                Portal::portals.push_back(abovePortal);
+                Portal::portals.push_back(belowPortal);
                 field->addPawn(abovePortal);
                 field->addPawn(belowPortal);
             }
@@ -564,7 +582,10 @@ void generateTunnels() {
                     break; // On "odd" horizontal tunnels we leave tunnel space on the right
                 }
                 if (field->isFree((unsigned short)row, (unsigned short)column)) {
-                    field->addPawn(new Wall({row, column}, INITIAL_WALL_STRENGTH - row / TUNNEL_UNIT / 3));
+                    auto wcoords = sista::Coordinates((unsigned short)row, (unsigned short)column);
+                    auto w = std::make_shared<Wall>(wcoords, INITIAL_WALL_STRENGTH - row / TUNNEL_UNIT / 3);
+                    Wall::walls.push_back(w);
+                    field->addPawn(w);
                 }
             }
         }
@@ -582,26 +603,34 @@ void spawnInitialEnemies() {
     std::shuffle(freeBaseCoordinates.begin(), freeBaseCoordinates.end(), rng);
 
     for (int i = 0; i < INITIAL_ARCHERS; i++) {
-        field->addPawn(new Archer(freeBaseCoordinates.front()));
+        auto a = std::make_shared<Archer>(freeBaseCoordinates.front());
+        Archer::archers.push_back(a);
+        field->addPawn(a);
         freeBaseCoordinates.pop_front();
     }
     for (int i = 0; i < INITIAL_WORMS; i++) {
-        field->addPawn(new Worm(freeBaseCoordinates.front(), Direction::UP));
+        auto w = std::make_shared<Worm>(freeBaseCoordinates.front(), Direction::UP);
+        Worm::worms.push_back(w);
+        field->addPawn(w);
         freeBaseCoordinates.pop_front();
     }
 }
 
 void spawnEnemies() {
     if (Archer::spawning(rng)) {
-        sista::Coordinates coords = {HEIGHT - 1, rand() % WIDTH};
+        sista::Coordinates coords = {HEIGHT - 1, (unsigned short)(rand() % WIDTH)};
         if (field->isFree(coords)) {
-            field->addPrintPawn(new Archer(coords));
+            auto a = std::make_shared<Archer>(coords);
+            Archer::archers.push_back(a);
+            field->addPrintPawn(a);
         }
     }
     if (Worm::spawning(rng)) {
-        sista::Coordinates coords = {HEIGHT - 1, rand() % WIDTH};
+        sista::Coordinates coords = {HEIGHT - 1, (unsigned short)(rand() % WIDTH)};
         if (field->isFree(coords)) {
-            field->addPrintPawn(new Worm(coords, Direction::UP));
+            auto w = std::make_shared<Worm>(coords, Direction::UP);
+            Worm::worms.push_back(w);
+            field->addPrintPawn(w);
         }
     }
 }
@@ -736,33 +765,15 @@ void printEndInformation(EndReason endReason) {
 }
 
 void deallocateAll() {
-    for (auto wall : Wall::walls) {
-        delete wall;
-    }
-    for (auto bullet : Bullet::bullets) {
-        delete bullet;
-    }
-    for (auto chest : Chest::chests) {
-        delete chest;
-    }
-    for (auto portal : Portal::portals) {
-        delete portal;
-    }
-    for (auto mine : Mine::mines) {
-        delete mine;
-    }
-    for (auto bullet : EnemyBullet::enemyBullets) {
-        delete bullet;
-    }
-    for (auto archer : Archer::archers) {
-        delete archer;
-    }
-    for (auto wormBody : WormBody::wormBodies) {
-        delete wormBody;
-    }
-    for (auto worm : Worm::worms) {
-        delete worm;
-    }
+    Wall::walls.clear();
+    Bullet::bullets.clear();
+    Chest::chests.clear();
+    Portal::portals.clear();
+    Mine::mines.clear();
+    EnemyBullet::enemyBullets.clear();
+    Archer::archers.clear();
+    WormBody::wormBodies.clear();
+    Worm::worms.clear();
 }
 
 std::unordered_map<Direction, sista::Coordinates> directionMap = {

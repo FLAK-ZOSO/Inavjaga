@@ -15,12 +15,12 @@ void printEndInformation(EndReason);
 
 EnemyBullet::EnemyBullet(sista::Coordinates coordinates, Direction direction) :
     Entity(directionSymbol[direction], coordinates, enemyBulletStyle, Type::ENEMY_BULLET), direction(direction), collided(false) {
-    EnemyBullet::enemyBullets.push_back(this);
+    // ownership moved to creator via std::shared_ptr; do not push here
 }
 void EnemyBullet::remove() {
-    EnemyBullet::enemyBullets.erase(std::find(EnemyBullet::enemyBullets.begin(), EnemyBullet::enemyBullets.end(), this));
+    auto it = std::find_if(EnemyBullet::enemyBullets.begin(), EnemyBullet::enemyBullets.end(), [this](const std::shared_ptr<EnemyBullet>& p){ return p.get() == this; });
+    if (it != EnemyBullet::enemyBullets.end()) EnemyBullet::enemyBullets.erase(it);
     field->erasePawn(this);
-    delete this;
 }
 void EnemyBullet::move() {
     sista::Coordinates next = this->coordinates + directionMap[direction];

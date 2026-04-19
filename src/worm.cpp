@@ -17,22 +17,29 @@ enum EndReason {STARVED, SHOT, EATEN, STABBED, TOUCHDOWN, QUIT};
 void printEndInformation(EndReason);
 
 WormBody::WormBody(sista::Coordinates coordinates, Direction direction) : Entity(directionSymbol[direction], coordinates, wormBodyStyle, Type::WORM_BODY) {
-    WormBody::wormBodies.push_back(this);
+    // ownership moved to creator via std::shared_ptr; do not push here
 }
 void WormBody::die() {
     sista::Coordinates drop = this->coordinates;
     #if DEBUG
     std::cerr << "WormBody::die() called for " << this << " at {" << drop.y << ", " << drop.x << "}" << std::endl;
     #endif
-    field->addPrintPawn(new Chest(drop, {0, 1, 0}));
-    WormBody::wormBodies.erase(std::find(WormBody::wormBodies.begin(), WormBody::wormBodies.end(), this));
-    this->head->body.erase(std::find(this->head->body.begin(), this->head->body.end(), this));
-    delete this;
+    // Free the pawn's coordinates first so we can place a chest there
+    field->erasePawn(this);
+    field->addPrintPawn(std::make_shared<Chest>(drop, Inventory{0,1,0}));
+    auto wormBodyIt = std::find_if(WormBody::wormBodies.begin(), WormBody::wormBodies.end(), [this](const std::shared_ptr<WormBody>& p){ return p.get() == this; });
+    if (wormBodyIt != WormBody::wormBodies.end()) WormBody::wormBodies.erase(wormBodyIt);
+    auto head = this->head.lock();
+    if (head) {
+        auto headBodyIt = std::find_if(head->body.begin(), head->body.end(), [this](const std::shared_ptr<WormBody>& p){ return p.get() == this; });
+        if (headBodyIt != head->body.end()) head->body.erase(headBodyIt);
+    }
+    // destruction handled by shared_ptr owners
 }
 void WormBody::remove() {
-    WormBody::wormBodies.erase(std::find(WormBody::wormBodies.begin(), WormBody::wormBodies.end(), this));
+    auto it = std::find_if(WormBody::wormBodies.begin(), WormBody::wormBodies.end(), [this](const std::shared_ptr<WormBody>& p){ return p.get() == this; });
+    if (it != WormBody::wormBodies.end()) WormBody::wormBodies.erase(it);
     field->erasePawn(this);
-    delete this;
 }
 sista::ANSISettings WormBody::wormBodyStyle = {
     sista::RGBColor(50, 0xff, 150),
@@ -42,7 +49,6 @@ sista::ANSISettings WormBody::wormBodyStyle = {
 
 Worm::Worm(sista::Coordinates coordinates) : Entity('H', coordinates, wormHeadStyle, Type::WORM_HEAD), hp(WORM_HEALTH_POINTS), collided(false) {
     direction = (Direction)(rand() % 4);
-    Worm::worms.push_back(this);
 }
 Worm::Worm(sista::Coordinates coordinates, Direction direction) : Worm(coordinates) {
     this->direction = direction;
@@ -81,24 +87,28 @@ void Worm::move() {
         /* Movement inspired from Dune (https://github.com/Lioydiano/Dune/blob/90a1f9c412258f701e3dfe949b05c6bcaa171e9f/dune.cpp#L386) */
         field->movePawn(this, next);
         // We now create a piece of body to leave behind the head, a "neck"
-        WormBody* neck = new WormBody(oldHeadCoordinates, direction);
-        neck->head = this;
+        auto neck = std::make_shared<WormBody>(oldHeadCoordinates, direction);
+        neck->head = this->weak_from_this();
+        WormBody::wormBodies.push_back(neck);
         field->addPrintPawn(neck);
         body.push_back(neck);
         // Consider that we added a body piece, so we need to ensure it does not grow too much
         if (body.size() > WORM_LENGTH) {
-            WormBody* tail = body.front();
+            auto tail_ptr = body.front();
+            WormBody* tail = tail_ptr.get();
             sista::Coordinates drop = tail->getCoordinates();
             #if DEBUG
             std::cerr << "In Worm::move() deleting the tail piece " << this << " at {" << drop.y << ", " << drop.x << "}" << std::endl;
             #endif
             field->erasePawn(tail);
             if (clayRelease(rng)) {
-                field->addPrintPawn(new Chest(drop, {1, 0, 0}));
+                auto c = std::make_shared<Chest>(drop, Inventory{1,0,0});
+                Chest::chests.push_back(c);
+                field->addPrintPawn(c);
             }
             body.erase(body.begin());
-            WormBody::wormBodies.erase(std::find(WormBody::wormBodies.begin(), WormBody::wormBodies.end(), tail));
-            delete tail;
+            auto itwb = std::find_if(WormBody::wormBodies.begin(), WormBody::wormBodies.end(), [tail](const std::shared_ptr<WormBody>& p){ return p.get() == tail; });
+            if (itwb != WormBody::wormBodies.end()) WormBody::wormBodies.erase(itwb);
         }
     } else if (field->isOccupied(next)) {
         Entity* entity = (Entity*)field->getPawn(next);
@@ -165,22 +175,23 @@ void Worm::getHit() {
 }
 void Worm::die() {
     while (!body.empty()) {
-        WormBody* tail = body.front();
-        tail->die(); // Self deletes from the body too
+        auto tail_ptr = body.front();
+        WormBody* tail = tail_ptr.get();
+        tail->die(); // removes itself from head->body and wormBodies
     }
-    Worm::worms.erase(std::find(Worm::worms.begin(), Worm::worms.end(), this));
+    auto it = std::find_if(Worm::worms.begin(), Worm::worms.end(), [this](const std::shared_ptr<Worm>& p){ return p.get() == this; });
+    if (it != Worm::worms.end()) Worm::worms.erase(it);
     field->erasePawn(this);
-    field->addPrintPawn(new Chest(coordinates, {
-        LOOT_WORM_HEAD_CLAY,
-        LOOT_WORM_HEAD_BULLETS,
-        LOOT_WORM_HEAD_MEAT
-    }));
-    delete this;
+    {
+    auto c = std::make_shared<Chest>(coordinates, Inventory{LOOT_WORM_HEAD_CLAY, LOOT_WORM_HEAD_BULLETS, LOOT_WORM_HEAD_MEAT});
+    Chest::chests.push_back(c);
+    field->addPrintPawn(c);
+    }
 }
 void Worm::remove() {
-    Worm::worms.erase(std::find(Worm::worms.begin(), Worm::worms.end(), this));
+    auto it = std::find_if(Worm::worms.begin(), Worm::worms.end(), [this](const std::shared_ptr<Worm>& p){ return p.get() == this; });
+    if (it != Worm::worms.end()) Worm::worms.erase(it);
     field->erasePawn(this);
-    delete this;
 }
 Direction Worm::options[2] = {Direction::LEFT, Direction::RIGHT};
 std::bernoulli_distribution Worm::turning(WORM_TURNING_PROBABILITY);
