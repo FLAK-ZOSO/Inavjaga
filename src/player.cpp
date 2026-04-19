@@ -4,6 +4,7 @@
 #include "chest.hpp"
 #include "bullet.hpp"
 #include "mine.hpp"
+#include <memory>
 
 const Inventory INITIAL_INVENTORY {
     INITIAL_CLAY,
@@ -100,7 +101,7 @@ void Player::shoot(Direction direction) {
     }
 }
 sista::ANSISettings Player::playerStyle = {
-    sista::ForegroundColor::F_RED,
-    sista::BackgroundColor::B_BLACK,
+    sista::ForegroundColor::RED,
+    sista::BackgroundColor::BLACK,
     sista::Attribute::BRIGHT
 };

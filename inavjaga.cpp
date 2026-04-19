@@ -1,6 +1,7 @@
 #include "include/cross_platform.hpp"
 #include "inavjaga.hpp"
 #include <algorithm>
+#include <memory>
 #include <future>
 #include <thread>
 #include <chrono>
@@ -399,8 +400,8 @@ void tutorial() {
     std::cout << "Protect the red area. And don't starve: you consume meat.";
     
     sista::ANSISettings highlight(
-        sista::ForegroundColor::F_RED,
-        sista::BackgroundColor::B_RED,
+        sista::ForegroundColor::RED,
+        sista::BackgroundColor::RED,
         sista::Attribute::BLINK
     );
     std::vector<sista::Pawn*> highlightPawns;
@@ -445,7 +446,7 @@ void printSideInstructions(int i) {
     cursor.goTo(3, WIDTH + 10);
     sista::setAttribute(sista::Attribute::BRIGHT);
     std::cout << "Inventory\n";
-    sista::resetAnsiAttribute(sista::Attribute::BRIGHT);
+    sista::resetAttribute(sista::Attribute::BRIGHT);
     cursor.goTo(4, WIDTH + 10);
     std::cout << "Clay: " << Player::player->inventory.clay << "   \n";
     cursor.goTo(5, WIDTH + 10);
@@ -475,7 +476,7 @@ void printSideInstructions(int i) {
     cursor.goTo(10, WIDTH + 10);
     sista::setAttribute(sista::Attribute::BRIGHT);
     std::cout << "Time survived: " << i << "    \n";
-    sista::resetAnsiAttribute(sista::Attribute::BRIGHT);
+    sista::resetAttribute(sista::Attribute::BRIGHT);
     cursor.goTo(11, WIDTH + 10);
 
     if (i == 0) printKeys();
@@ -484,7 +485,7 @@ void printKeys() {
     cursor.goTo(12, WIDTH + 10);
     sista::setAttribute(sista::Attribute::BRIGHT);
     std::cout << "Instructions\n";
-    sista::resetAnsiAttribute(sista::Attribute::BRIGHT);
+    sista::resetAttribute(sista::Attribute::BRIGHT);
     cursor.goTo(13, WIDTH + 10);
     std::cout << "Move: \x1b[35mw\x1b[37m | \x1b[35ma\x1b[37m | \x1b[35ms\x1b[37m | \x1b[35md\x1b[37m\n";
     cursor.goTo(14, WIDTH+10);

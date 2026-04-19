@@ -7,9 +7,11 @@
 #include "player.hpp"
 #include "wall.hpp"
 #include "enemyBullet.hpp"
+#include <queue>
 #include <unordered_map>
 #include <map>
 #include <set>
+#include <memory>
 
 extern std::unordered_map<Direction, char> directionSymbol;
 extern std::unordered_map<Direction, sista::Coordinates> directionMap;
@@ -251,7 +253,7 @@ std::bernoulli_distribution Archer::moving(ARCHER_MOVING_PROBABILITY);
 std::bernoulli_distribution Archer::shooting(ARCHER_SHOOTING_PROBABILITY);
 std::bernoulli_distribution Archer::spawning(ARCHER_SPAWNING_PROBABILITY);
 sista::ANSISettings Archer::archerStyle = {
-    sista::ForegroundColor::F_CYAN,
-    sista::BackgroundColor::B_BLACK,
+    sista::ForegroundColor::CYAN,
+    sista::BackgroundColor::BLACK,
     sista::Attribute::STRIKETHROUGH
 };

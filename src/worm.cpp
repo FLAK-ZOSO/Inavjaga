@@ -5,6 +5,7 @@
 #include "mine.hpp"
 #include "wall.hpp"
 #include <unordered_map>
+#include <memory>
 
 extern std::unordered_map<Direction, char> directionSymbol;
 extern std::unordered_map<Direction, sista::Coordinates> directionMap;
@@ -35,7 +36,7 @@ void WormBody::remove() {
 }
 sista::ANSISettings WormBody::wormBodyStyle = {
     sista::RGBColor(50, 0xff, 150),
-    sista::BackgroundColor::B_BLACK,
+    sista::BackgroundColor::BLACK,
     sista::Attribute::BRIGHT
 };
 
@@ -189,7 +190,7 @@ std::bernoulli_distribution Worm::eatingTail(WORM_EATING_TAIL_PROBABILITY);
 std::bernoulli_distribution Worm::eatingArcher(WORM_EATING_ARCHER_PROBABILITY);
 std::bernoulli_distribution Worm::clayRelease(CLAY_RELEASE_PROBABILITY);
 sista::ANSISettings Worm::wormHeadStyle = {
-    sista::ForegroundColor::F_GREEN,
-    sista::BackgroundColor::B_BLACK,
+    sista::ForegroundColor::GREEN,
+    sista::BackgroundColor::BLACK,
     sista::Attribute::RAPID_BLINK
 };

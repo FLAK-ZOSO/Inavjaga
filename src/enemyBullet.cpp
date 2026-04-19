@@ -71,7 +71,7 @@ void EnemyBullet::move() {
     }
 }
 sista::ANSISettings EnemyBullet::enemyBulletStyle = {
-    sista::ForegroundColor::F_GREEN,
-    sista::BackgroundColor::B_BLACK,
+    sista::ForegroundColor::GREEN,
+    sista::BackgroundColor::BLACK,
     sista::Attribute::BRIGHT
 };

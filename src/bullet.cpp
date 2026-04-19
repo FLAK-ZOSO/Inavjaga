@@ -68,7 +68,7 @@ void Bullet::move() {
     }
 }
 sista::ANSISettings Bullet::bulletStyle = {
-    sista::ForegroundColor::F_MAGENTA,
-    sista::BackgroundColor::B_BLACK,
+    sista::ForegroundColor::MAGENTA,
+    sista::BackgroundColor::BLACK,
     sista::Attribute::BRIGHT
 };
