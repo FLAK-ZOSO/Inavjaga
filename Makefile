@@ -1,7 +1,9 @@
 # Makefile for Inavjaga
 CXX = g++
 CXXFLAGS = -std=c++17 -Wpedantic -Wno-narrowing -g
-LDFLAGS = -L/usr/lib -lpthread -lSista
+# Ensure the runtime linker can find libSista.dylib installed to /usr/local/lib
+# Add /usr/local/lib to the library search path and embed an rpath into the binary.
+LDFLAGS = -L/usr/local/lib -L/usr/lib -lpthread -lSista -Wl,-rpath,/usr/local/lib
 
 # List all your source files here
 SRC = inavjaga.cpp \
