@@ -25,6 +25,7 @@ jobs:
         with:
           repository: FLAK-ZOSO/Sista
           path: sista
+          token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 1
 
       - name: Build and install Sista (Linux/macOS)
@@ -33,7 +34,7 @@ jobs:
           set -e
           cd sista
           sudo make install
-          cd ..
+          cd ,,
 
       - name: Run make
         run: make
