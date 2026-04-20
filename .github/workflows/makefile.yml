@@ -22,6 +22,21 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Checkout Sista dependency
+        uses: actions/checkout@v4
+        with:
+          repository: FLAK-ZOSO/Sista
+          path: sista
+          fetch-depth: 1
+
+      - name: Build and install Sista (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: |
+          set -e
+          cd sista
+          sudo make install
+          cd ..
+
       - name: Run make
         run: make
 
