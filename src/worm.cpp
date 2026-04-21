@@ -179,6 +179,8 @@ void Worm::getHit() {
     }
 }
 void Worm::die() {
+    // Save coordinates early and keep self alive while mutating Worm::worms.
+    sista::Coordinates drop = coordinates;
     while (!body.empty()) {
         auto tail_ptr = body.front();
         WormBody* tail = tail_ptr.get();
@@ -186,11 +188,21 @@ void Worm::die() {
     }
     field->erasePawn(this);
     auto it = std::find_if(Worm::worms.begin(), Worm::worms.end(), [this](const std::shared_ptr<Worm>& p){ return p.get() == this; });
-    if (it != Worm::worms.end()) Worm::worms.erase(it);
+    std::shared_ptr<Worm> self; // Keep self alive until the end of the function to ensure the chest is created before the Worm is destroyed
+    if (it != Worm::worms.end()) {
+        self = *it;
+        Worm::worms.erase(it);
+    }
     {
-    auto c = std::make_shared<Chest>(coordinates, Inventory{LOOT_WORM_HEAD_CLAY, LOOT_WORM_HEAD_BULLETS, LOOT_WORM_HEAD_MEAT});
-    Chest::chests.push_back(c);
-    field->addPrintPawn(c);
+        auto c = std::make_shared<Chest>(
+            drop, Inventory{
+                LOOT_WORM_HEAD_CLAY,
+                LOOT_WORM_HEAD_BULLETS,
+                LOOT_WORM_HEAD_MEAT
+            }
+        );
+        Chest::chests.push_back(c);
+        field->addPrintPawn(c);
     }
 }
 void Worm::remove() {
