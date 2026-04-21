@@ -187,12 +187,6 @@ void Worm::die() {
         tail->die(); // removes itself from head->body and wormBodies
     }
     field->erasePawn(this);
-    auto it = std::find_if(Worm::worms.begin(), Worm::worms.end(), [this](const std::shared_ptr<Worm>& p){ return p.get() == this; });
-    std::shared_ptr<Worm> self; // Keep self alive until the end of the function to ensure the chest is created before the Worm is destroyed
-    if (it != Worm::worms.end()) {
-        self = *it;
-        Worm::worms.erase(it);
-    }
     {
         auto c = std::make_shared<Chest>(
             drop, Inventory{
@@ -203,6 +197,10 @@ void Worm::die() {
         );
         Chest::chests.push_back(c);
         field->addPrintPawn(c);
+    }
+    auto it = std::find_if(Worm::worms.begin(), Worm::worms.end(), [this](const std::shared_ptr<Worm>& p){ return p.get() == this; });
+    if (it != Worm::worms.end()) {
+        Worm::worms.erase(it);
     }
 }
 void Worm::remove() {
