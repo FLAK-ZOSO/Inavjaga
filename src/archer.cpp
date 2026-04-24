@@ -7,15 +7,17 @@
 #include "player.hpp"
 #include "wall.hpp"
 #include "enemyBullet.hpp"
+#include <queue>
 #include <unordered_map>
 #include <map>
 #include <set>
+#include <memory>
 
 extern std::unordered_map<Direction, char> directionSymbol;
 extern std::unordered_map<Direction, sista::Coordinates> directionMap;
 extern std::map<int, std::vector<int>> passages; // {y, {x1, x2, x3...}}
 extern std::map<int, std::vector<int>> breaches; // Central breaches, "holes"
-extern sista::SwappableField* field;
+extern std::shared_ptr<sista::SwappableField> field;
 extern std::mt19937 rng;
 extern std::bernoulli_distribution dumbMoveDistribution;
 extern bool dead;
@@ -23,7 +25,7 @@ enum EndReason {STARVED, SHOT, EATEN, STABBED, TOUCHDOWN, QUIT};
 void printEndInformation(EndReason);
 
 Archer::Archer(sista::Coordinates coordinates) : Entity('A', coordinates, archerStyle, Type::ARCHER) {
-    Archer::archers.push_back(this);
+    // ownership moved to creator via std::shared_ptr; do not push here
 }
 void Archer::move() {
     // There is always a probability of a dumb move
@@ -210,13 +212,17 @@ bool Archer::shoot(Direction direction) {
     if (field->isOutOfBounds(target)) {
         return false;
     } else if (field->isFree(target)) {
-        field->addPrintPawn(new EnemyBullet(target, direction));
+        {
+            auto eb = std::make_shared<EnemyBullet>(target, direction);
+            EnemyBullet::enemyBullets.push_back(eb);
+            field->addPrintPawn(eb);
+        }
         return true;
     } else if (field->isOccupied(target)) {
         Entity* entity = (Entity*)field->getPawn(target);
         switch (entity->type) {
             case Type::WALL:
-                ((Wall*)entity)->getHit();
+                ((Wall*)entity)->takeHit();
                 break;
             case Type::PLAYER: // Counts as a dagger hit
                 printEndInformation(EndReason::STABBED);
@@ -233,25 +239,25 @@ bool Archer::shoot(Direction direction) {
     return false;
 }
 void Archer::die() {
-    Archer::archers.erase(std::find(Archer::archers.begin(), Archer::archers.end(), this));
+    [[maybe_unused]] auto keepAlive = Entity::keepAliveFrom(Archer::archers, this);
     field->erasePawn(this);
-    field->addPrintPawn(new Chest(coordinates, {
-        LOOT_ARCHER_CLAY,
-        LOOT_ARCHER_BULLETS,
-        LOOT_ARCHER_MEAT
-    }));
-    delete this;
+    Entity::removeOwner(Archer::archers, this);
+    {
+        auto c = std::make_shared<Chest>(coordinates, Inventory{LOOT_ARCHER_CLAY, LOOT_ARCHER_BULLETS, LOOT_ARCHER_MEAT});
+        Chest::chests.push_back(c);
+        field->addPrintPawn(c);
+    }
 }
 void Archer::remove() {
-    Archer::archers.erase(std::find(Archer::archers.begin(), Archer::archers.end(), this));
+    [[maybe_unused]] auto keepAlive = Entity::keepAliveFrom(Archer::archers, this);
     field->erasePawn(this);
-    delete this;
+    Entity::removeOwner(Archer::archers, this);
 }
 std::bernoulli_distribution Archer::moving(ARCHER_MOVING_PROBABILITY);
 std::bernoulli_distribution Archer::shooting(ARCHER_SHOOTING_PROBABILITY);
 std::bernoulli_distribution Archer::spawning(ARCHER_SPAWNING_PROBABILITY);
-ANSI::Settings Archer::archerStyle = {
-    ANSI::ForegroundColor::F_CYAN,
-    ANSI::BackgroundColor::B_BLACK,
-    ANSI::Attribute::STRIKETHROUGH
+sista::ANSISettings Archer::archerStyle = {
+    sista::ForegroundColor::CYAN,
+    sista::BackgroundColor::BLACK,
+    sista::Attribute::STRIKETHROUGH
 };

@@ -1,18 +1,21 @@
 #include "portal.hpp"
 #include "constants.hpp"
 
-extern sista::SwappableField* field;
+extern std::shared_ptr<sista::SwappableField> field;
 
 Portal::Portal(sista::Coordinates coordinates) : Entity('&', coordinates, portalStyle, Type::PORTAL) {
-    Portal::portals.push_back(this);
+    // ownership moved to creator via std::shared_ptr; do not push here
+}
+Portal::Portal(sista::Coordinates coordinates, std::weak_ptr<Portal> exit) : Portal(coordinates) {
+    this->exit = exit;
 }
 void Portal::remove() {
-    Portal::portals.erase(std::find(Portal::portals.begin(), Portal::portals.end(), this));
+    [[maybe_unused]] auto keepAlive = Entity::keepAliveFrom(Portal::portals, this);
     field->erasePawn(this);
-    delete this;
+    Entity::removeOwner(Portal::portals, this);
 }
-ANSI::Settings Portal::portalStyle = {
+sista::ANSISettings Portal::portalStyle = {
     RGB_ROCKS_FOREGROUND,
     RGB_ROCKS_BACKGROUND,
-    ANSI::Attribute::FAINT
+    sista::Attribute::FAINT
 };

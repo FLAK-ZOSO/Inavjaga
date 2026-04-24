@@ -1,30 +1,32 @@
 #include "include/cross_platform.hpp"
 #include "inavjaga.hpp"
 #include <algorithm>
+#include <memory>
 #include <future>
 #include <thread>
 #include <chrono>
 #include <mutex>
 #include <stack>
+#include <iostream>
 
-Player* Player::player;
-std::vector<Wall*> Wall::walls;
-std::vector<Bullet*> Bullet::bullets;
-std::vector<EnemyBullet*> EnemyBullet::enemyBullets;
-std::vector<Chest*> Chest::chests;
-std::vector<Portal*> Portal::portals;
-std::vector<Mine*> Mine::mines;
-std::vector<Archer*> Archer::archers;
-std::vector<WormBody*> WormBody::wormBodies;
-std::vector<Worm*> Worm::worms;
+std::shared_ptr<Player> Player::player;
+std::vector<std::shared_ptr<Wall>> Wall::walls;
+std::vector<std::shared_ptr<Bullet>> Bullet::bullets;
+std::vector<std::shared_ptr<EnemyBullet>> EnemyBullet::enemyBullets;
+std::vector<std::shared_ptr<Chest>> Chest::chests;
+std::vector<std::shared_ptr<Portal>> Portal::portals;
+std::vector<std::shared_ptr<Mine>> Mine::mines;
+std::vector<std::shared_ptr<Archer>> Archer::archers;
+std::vector<std::shared_ptr<WormBody>> WormBody::wormBodies;
+std::vector<std::shared_ptr<Worm>> Worm::worms;
 
-sista::SwappableField* field;
+std::shared_ptr<sista::SwappableField> field;
 sista::Cursor cursor;
 sista::Border border(
     '@', {
         RGB_ROCKS_FOREGROUND,
         RGB_ROCKS_BACKGROUND,
-        ANSI::Attribute::BRIGHT
+        sista::Attribute::BRIGHT
     }
 );
 std::mutex streamMutex;
@@ -40,13 +42,13 @@ int main(int argc, char* argv[]) {
         term_echooff();
     #endif
     std::ios_base::sync_with_stdio(false);
-    ANSI::reset(); // Reset the settings
+    sista::resetAnsi(); // Reset the settings
     srand(time(0)); // Seed the random number generator
 
-    sista::SwappableField field_(WIDTH, HEIGHT);
-    field = &field_;
+    field = std::make_shared<sista::SwappableField>(WIDTH, HEIGHT);
     generateTunnels();
-    Player::player = new Player(SPAWN_COORDINATES);
+    sista::Coordinates spawn = SPAWN_COORDINATES;
+    Player::player = std::make_shared<Player>(spawn);
     Player::player->mode = Player::Mode::BULLET;
     field->addPawn(Player::player);
     #if INTRO
@@ -72,13 +74,13 @@ int main(int argc, char* argv[]) {
             lastDeathFrame = i;
             sista::Coordinates deathCoordinates = Player::player->getCoordinates();
             sista::Coordinates respawnCoordinates = RESPAWN_COORDINATES;
-            field->movePawn(Player::player, respawnCoordinates);
+            field->movePawn(Player::player.get(), respawnCoordinates);
             #if DROP_INVENTORY_ON_DEATH
-            field->addPrintPawn(new Chest(deathCoordinates, {
-                Player::player->inventory.clay,
-                Player::player->inventory.bullets,
-                0
-            }));
+            {
+                auto c = std::make_shared<Chest>(deathCoordinates, Inventory{Player::player->inventory.clay, Player::player->inventory.bullets, 0});
+                Chest::chests.push_back(c);
+                field->addPrintPawn(c);
+            }
             #endif
             Player::player->inventory.clay = 0;
             Player::player->inventory.bullets = 0;
@@ -96,32 +98,43 @@ int main(int argc, char* argv[]) {
         #endif
         std::lock_guard<std::mutex> lock(streamMutex); // Lock stays until scope ends
         for (int k = 0; k < BULLET_SPEED; k++) {
+            // move player bullets
             for (unsigned j = 0; j < Bullet::bullets.size(); j++) {
-                Bullet* bullet = Bullet::bullets[j];
+                Bullet* bullet = Bullet::bullets[j].get();
                 if (bullet == nullptr) continue;
                 if (bullet->collided) continue;
                 bullet->move();
             }
-            for (Bullet* bullet : Bullet::bullets) {
-                if (bullet->collided) {
-                    bullet->remove();
+            // collect collided player bullets, then remove them (safe even if remove() mutates Bullet::bullets)
+            {
+                std::vector<std::shared_ptr<Bullet>> to_remove;
+                for (auto &bp : Bullet::bullets) {
+                    Bullet* bullet = bp.get();
+                    if (bullet && bullet->collided) to_remove.push_back(bp);
                 }
+                for (auto &bp : to_remove) bp->remove();
             }
+
+            // move enemy bullets
             for (unsigned j = 0; j < EnemyBullet::enemyBullets.size(); j++) {
-                EnemyBullet* bullet = EnemyBullet::enemyBullets[j];
+                EnemyBullet* bullet = EnemyBullet::enemyBullets[j].get();
                 if (bullet == nullptr) continue;
                 if (bullet->collided) continue;
                 bullet->move();
             }
-            for (EnemyBullet* bullet : EnemyBullet::enemyBullets) {
-                if (bullet->collided) {
-                    bullet->remove();
+            // collect collided enemy bullets, then remove them
+            {
+                std::vector<std::shared_ptr<EnemyBullet>> to_remove;
+                for (auto &bp : EnemyBullet::enemyBullets) {
+                    EnemyBullet* bullet = bp.get();
+                    if (bullet && bullet->collided) to_remove.push_back(bp);
                 }
+                for (auto &bp : to_remove) bp->remove();
             }
         }
         for (unsigned j = 0; j < Mine::mines.size(); j++) {
             if (j >= Mine::mines.size()) break;
-            Mine* mine = Mine::mines[j];
+            Mine* mine = Mine::mines[j].get();
             if (mine->triggered) {
                 if (Mine::explosion(rng)) {
                     mine->explode();
@@ -137,7 +150,7 @@ int main(int argc, char* argv[]) {
             }
         }
         for (unsigned j = 0; j < Worm::worms.size(); j++) {
-            Worm* worm = Worm::worms[j];
+            Worm* worm = Worm::worms[j].get();
             if (worm == nullptr) continue;
             if (worm->collided) continue;
             if (Worm::turning(rng)) {
@@ -147,14 +160,15 @@ int main(int argc, char* argv[]) {
                 worm->move();
             }
         }
-        for (Worm* worm : Worm::worms) {
-            if (worm->collided) {
+        for (auto &wp : Worm::worms) {
+            Worm* worm = wp.get();
+            if (worm && worm->collided) {
                 worm->die();
             }
         }
         for (unsigned j = 0; j < Mine::mines.size(); j++) {
             if (j >= Mine::mines.size()) break;
-            Mine* mine = Mine::mines[j];
+            Mine* mine = Mine::mines[j].get();
             if (!mine->triggered) {
                 for (int k=-MINE_SENSITIVITY_RADIUS; k<=MINE_SENSITIVITY_RADIUS; k++) {
                     for (int h=-MINE_SENSITIVITY_RADIUS; h<=MINE_SENSITIVITY_RADIUS; h++) {
@@ -176,7 +190,7 @@ int main(int argc, char* argv[]) {
             for (int j = 0; j < DAMAGED_WALLS_COUNT; j++) {
                 if (Wall::walls.empty()) break;
                 int index = std::uniform_int_distribution<int>(0, Wall::walls.size() - 1)(rng);
-                Wall::walls[index]->getHit();
+                Wall::walls[index]->takeHit();
             }
         }
         if (i % MEAT_DURATION_PERIOD == MEAT_DURATION_PERIOD - 1) {
@@ -205,7 +219,7 @@ int main(int argc, char* argv[]) {
     deallocateAll();
     th.join();
     field->clear();
-    cursor.set(72, 0); // Move the cursor to the bottom of the screen, so the terminal is not left in a weird state
+    cursor.goTo(72, 0); // Move the cursor to the bottom of the screen, so the terminal is not left in a weird state
     std::this_thread::sleep_for(std::chrono::seconds(1)); // Give the time to see the final screen
     flushInput();
     #if __linux__
@@ -253,23 +267,23 @@ void intro() {
         std::cout << "Use ctrl+<minus> and ctrl+<plus> or ctrl+<mouse-scroll> to resize your terminal.\n";
         std::cout << "Maximize your terminal window for an optimal view on the field, then enter any key to proceed.\n";
         field->print(border);
-        ANSI::reset();
-        cursor.set(8, (unsigned short)(WIDTH / 2.1));
+        sista::resetAnsi();
+        cursor.goTo(8, (unsigned short)(WIDTH / 2.1));
         std::cout << "Inävjaga";
-        cursor.set(TUNNEL_UNIT * 3 + 7, TUNNEL_UNIT * 2 + 2);
+        cursor.goTo(TUNNEL_UNIT * 3 + 7, TUNNEL_UNIT * 2 + 2);
         Player::playerStyle.apply();
         std::cout << "Inävjaga v" << VERSION;
-        cursor.set(TUNNEL_UNIT * 3 + 7, (unsigned short)(WIDTH / 2.6));
-        ANSI::reset();
-        ANSI::setAttribute(ANSI::Attribute::ITALIC);
-        ANSI::setAttribute(ANSI::Attribute::FAINT);
+        cursor.goTo(TUNNEL_UNIT * 3 + 7, (unsigned short)(WIDTH / 2.6));
+        sista::resetAnsi();
+        sista::setAttribute(sista::Attribute::ITALIC);
+        sista::setAttribute(sista::Attribute::FAINT);
         std::cout << " originally by ";
-        ANSI::reset();
+        sista::resetAnsi();
         Player::playerStyle.apply();
         std::cout << AUTHOR << "     " << DATE;
-        ANSI::reset();
-        cursor.set(TUNNEL_UNIT * 3 + 9, (unsigned short)(WIDTH / 3.5));
-        ANSI::setAttribute(ANSI::Attribute::UNDERSCORE);
+        sista::resetAnsi();
+        cursor.goTo(TUNNEL_UNIT * 3 + 9, (unsigned short)(WIDTH / 3.5));
+        sista::setAttribute(sista::Attribute::UNDERSCORE);
         std::cout << "https://github.com/FLAK-ZOSO/Inavjaga";
         std::cout << std::flush;
 
@@ -285,18 +299,18 @@ void tutorial() {
     field->print(border);
     printSideInstructions(0);
 
-    cursor.set(TUNNEL_UNIT * 3 + 3 + 1, 4);
-    ANSI::reset();
+    cursor.goTo(TUNNEL_UNIT * 3 + 3 + 1, 4);
+    sista::resetAnsi();
     std::cout << "When you want to skip the tutorial, click 'n' at any point";
-    cursor.set(TUNNEL_UNIT * 3 + 3 + 2, 4);
+    cursor.goTo(TUNNEL_UNIT * 3 + 3 + 2, 4);
     std::cout << "To disable it, set TUTORIAL to 0 in constants.hpp and recompile";
 
-    cursor.set(TUNNEL_UNIT * 4 + 4, 4);
-    ANSI::reset();
+    cursor.goTo(TUNNEL_UNIT * 4 + 4, 4);
+    sista::resetAnsi();
     std::cout << "You are the ";
     Player::playerStyle.apply();
     std::cout << "$ player";
-    ANSI::reset();
+    sista::resetAnsi();
     std::cout << ", try moving around a bit" << std::endl;
 
     char input_;
@@ -316,14 +330,18 @@ void tutorial() {
         }
         std::cout << std::flush;
     }
-    field->addPrintPawn(new Archer({Player::player->getCoordinates().y, WIDTH - 3 * TUNNEL_UNIT - 1}));
+    {
+        auto a = std::make_shared<Archer>(sista::Coordinates{Player::player->getCoordinates().y, (unsigned short)(WIDTH - 3 * TUNNEL_UNIT - 1)});
+        Archer::archers.push_back(a);
+        field->addPrintPawn(a);
+    }
 
-    cursor.set(TUNNEL_UNIT * 5 + 3 + 1, 4);
-    ANSI::reset();
+    cursor.goTo(TUNNEL_UNIT * 5 + 3 + 1, 4);
+    sista::resetAnsi();
     std::cout << "An ";
     Archer::archerStyle.apply();
     std::cout << "Archer";
-    ANSI::reset();
+    sista::resetAnsi();
     std::cout << "! Enter bullet mode and shoot it!" << std::endl;
 
     flushInput();
@@ -352,12 +370,12 @@ void tutorial() {
         std::cout << std::flush;
     }
 
-    cursor.set(TUNNEL_UNIT * 6 + 3 + 1, 4);
-    ANSI::reset();
+    cursor.goTo(TUNNEL_UNIT * 6 + 3 + 1, 4);
+    sista::resetAnsi();
     std::cout << "You can loot its ";
     Chest::chestStyle.apply();
     std::cout << "Chest";
-    ANSI::reset();
+    sista::resetAnsi();
     std::cout << ". Enter collect mode and pick it up." << std::endl;
 
     while (!Chest::chests.empty()) {
@@ -376,36 +394,36 @@ void tutorial() {
         std::cout << std::flush;
     }
 
-    cursor.set(TUNNEL_UNIT * 7 + 3, 4);
-    ANSI::reset();
+    cursor.goTo(TUNNEL_UNIT * 7 + 3, 4);
+    sista::resetAnsi();
     std::cout << "Each wall layer can be traversed by you through ";
     Portal::portalStyle.apply();
     std::cout << "& Portals";
-    ANSI::reset();
+    sista::resetAnsi();
     std::cout << std::flush;
     std::this_thread::sleep_for(std::chrono::seconds(1));
-    cursor.set(TUNNEL_UNIT * 7 + 3 + 1, 4);
+    cursor.goTo(TUNNEL_UNIT * 7 + 3 + 1, 4);
     std::cout << "You might also encounter ";
     WormBody::wormBodyStyle.apply();
     std::cout << ">>>>>>>H Snakes";
-    ANSI::reset();
+    sista::resetAnsi();
     std::cout << ", I hope you have good aim.";
     std::cout << std::flush;
     std::this_thread::sleep_for(std::chrono::seconds(3));
 
-    cursor.set(TUNNEL_UNIT * 8 + 4, TUNNEL_UNIT * 2 + 3);
-    ANSI::reset();
+    cursor.goTo(TUNNEL_UNIT * 8 + 4, TUNNEL_UNIT * 2 + 3);
+    sista::resetAnsi();
     std::cout << "Protect the red area. And don't starve: you consume meat.";
     
-    ANSI::Settings highlight(
-        ANSI::ForegroundColor::F_RED,
-        ANSI::BackgroundColor::B_RED,
-        ANSI::Attribute::BLINK
+    sista::ANSISettings highlight(
+        sista::ForegroundColor::RED,
+        sista::BackgroundColor::RED,
+        sista::Attribute::BLINK
     );
-    std::vector<sista::Pawn*> highlightPawns;
+    std::vector<std::shared_ptr<sista::Pawn>> highlightPawns;
     for (int i = 0; i < TUNNEL_UNIT * 2; i++) {
         for (int j = WIDTH - TUNNEL_UNIT * 2; j < WIDTH; j++) {
-            sista::Pawn* pawn = new sista::Pawn(' ', {i, j}, highlight);
+            auto pawn = std::make_shared<sista::Pawn>(' ', sista::Coordinates{(unsigned short)i, (unsigned short)j}, highlight);
             highlightPawns.push_back(pawn);
             field->addPrintPawn(pawn);
         }
@@ -413,10 +431,10 @@ void tutorial() {
     std::cout << std::flush;
     std::this_thread::sleep_for(std::chrono::seconds(3));
     
-    cursor.set(TUNNEL_UNIT * 8 + 3 + 4, WIDTH / 3);
-    ANSI::reset();
-    ANSI::setAttribute(ANSI::Attribute::ITALIC);
-    ANSI::setAttribute(ANSI::Attribute::BLINK);
+    cursor.goTo(TUNNEL_UNIT * 8 + 3 + 4, WIDTH / 3);
+    sista::resetAnsi();
+    sista::setAttribute(sista::Attribute::ITALIC);
+    sista::setAttribute(sista::Attribute::BLINK);
     std::cout << "Press any key to play Inävjaga...";
     std::cout << std::flush;
     std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -429,8 +447,7 @@ void tutorial() {
     #endif
 
     while (!highlightPawns.empty()) {
-        field->erasePawn(highlightPawns[highlightPawns.size() - 1]);
-        delete highlightPawns.back();
+        field->erasePawn(highlightPawns.back().get());
         highlightPawns.pop_back();
     }
 
@@ -440,18 +457,18 @@ void tutorial() {
 
 void printSideInstructions(int i) {
     // Print the inventory
-    ANSI::reset();
-    cursor.set(3, WIDTH + 10);
-    ANSI::setAttribute(ANSI::Attribute::BRIGHT);
+    sista::resetAnsi();
+    cursor.goTo(3, WIDTH + 10);
+    sista::setAttribute(sista::Attribute::BRIGHT);
     std::cout << "Inventory\n";
-    ANSI::resetAttribute(ANSI::Attribute::BRIGHT);
-    cursor.set(4, WIDTH + 10);
+    sista::resetAttribute(sista::Attribute::BRIGHT);
+    cursor.goTo(4, WIDTH + 10);
     std::cout << "Clay: " << Player::player->inventory.clay << "   \n";
-    cursor.set(5, WIDTH + 10);
+    cursor.goTo(5, WIDTH + 10);
     std::cout << "Bullets: " << Player::player->inventory.bullets << "   \n";
-    cursor.set(6, WIDTH + 10);
+    cursor.goTo(6, WIDTH + 10);
     std::cout << "Meat: " << Player::player->inventory.meat << "   \n";
-    cursor.set(7, WIDTH + 10);
+    cursor.goTo(7, WIDTH + 10);
     std::cout << "Mode: ";
     switch (Player::player->mode) {
         case Player::Mode::COLLECT:
@@ -471,38 +488,38 @@ void printSideInstructions(int i) {
             break;
     }
     std::cout << "      ";
-    cursor.set(10, WIDTH + 10);
-    ANSI::setAttribute(ANSI::Attribute::BRIGHT);
+    cursor.goTo(10, WIDTH + 10);
+    sista::setAttribute(sista::Attribute::BRIGHT);
     std::cout << "Time survived: " << i << "    \n";
-    ANSI::resetAttribute(ANSI::Attribute::BRIGHT);
-    cursor.set(11, WIDTH + 10);
+    sista::resetAttribute(sista::Attribute::BRIGHT);
+    cursor.goTo(11, WIDTH + 10);
 
     if (i == 0) printKeys();
 }
 void printKeys() {
-    cursor.set(12, WIDTH + 10);
-    ANSI::setAttribute(ANSI::Attribute::BRIGHT);
+    cursor.goTo(12, WIDTH + 10);
+    sista::setAttribute(sista::Attribute::BRIGHT);
     std::cout << "Instructions\n";
-    ANSI::resetAttribute(ANSI::Attribute::BRIGHT);
-    cursor.set(13, WIDTH + 10);
+    sista::resetAttribute(sista::Attribute::BRIGHT);
+    cursor.goTo(13, WIDTH + 10);
     std::cout << "Move: \x1b[35mw\x1b[37m | \x1b[35ma\x1b[37m | \x1b[35ms\x1b[37m | \x1b[35md\x1b[37m\n";
-    cursor.set(14, WIDTH+10);
+    cursor.goTo(14, WIDTH+10);
     std::cout << "Act: \x1b[35mi\x1b[37m | \x1b[35mj\x1b[37m | \x1b[35mk\x1b[37m | \x1b[35ml\x1b[37m\n";
-    cursor.set(16, WIDTH + 10);
+    cursor.goTo(16, WIDTH + 10);
     std::cout << "Collect mode: \x1b[35mc\x1b[37m\n";
-    cursor.set(17, WIDTH + 10);
+    cursor.goTo(17, WIDTH + 10);
     std::cout << "Bullet mode: \x1b[35mb\x1b[37m\n";
-    cursor.set(18, WIDTH + 10);
+    cursor.goTo(18, WIDTH + 10);
     std::cout << "Dump Chest mode: \x1b[35me\x1b[37m\n";
-    cursor.set(19, WIDTH + 10);
+    cursor.goTo(19, WIDTH + 10);
     std::cout << "Place Trap mode: \x1b[35mt\x1b[37m\n";
-    cursor.set(20, WIDTH + 10);
+    cursor.goTo(20, WIDTH + 10);
     std::cout << "Place Mine mode: \x1b[35mm\x1b[37m | \x1b[35m*\x1b[37m\n";
-    cursor.set(22, WIDTH + 10);
+    cursor.goTo(22, WIDTH + 10);
     std::cout << "Speedup mode: \x1b[35m+\x1b[37m | \x1b[35m-\x1b[37m\n";
-    cursor.set(23, WIDTH + 10);
+    cursor.goTo(23, WIDTH + 10);
     std::cout << "Pause or resume: \x1b[35m.\x1b[37m | \x1b[35mp\x1b[37m\n";
-    cursor.set(24, WIDTH + 10);
+    cursor.goTo(24, WIDTH + 10);
     std::cout << "Quit: \x1b[35mQ\x1b[37m\n";
 }
 void reprint() {
@@ -524,10 +541,12 @@ void generateTunnels() {
                     abovePortalCoordinates = {row + TUNNEL_UNIT * 2, portalCoordinate};
                     belowPortalCoordinates = {row + TUNNEL_UNIT * 3 - 1, portalCoordinate};
                 } while (!field->isFree(abovePortalCoordinates) || !field->isFree(belowPortalCoordinates));
-                Portal* abovePortal = new Portal(abovePortalCoordinates);
-                Portal* belowPortal = new Portal(belowPortalCoordinates);
+                auto abovePortal = std::make_shared<Portal>(abovePortalCoordinates);
+                auto belowPortal = std::make_shared<Portal>(belowPortalCoordinates);
                 abovePortal->exit = belowPortal;
                 belowPortal->exit = abovePortal;
+                Portal::portals.push_back(abovePortal);
+                Portal::portals.push_back(belowPortal);
                 field->addPawn(abovePortal);
                 field->addPawn(belowPortal);
             }
@@ -562,7 +581,10 @@ void generateTunnels() {
                     break; // On "odd" horizontal tunnels we leave tunnel space on the right
                 }
                 if (field->isFree((unsigned short)row, (unsigned short)column)) {
-                    field->addPawn(new Wall({row, column}, INITIAL_WALL_STRENGTH - row / TUNNEL_UNIT / 3));
+                    auto wcoords = sista::Coordinates((unsigned short)row, (unsigned short)column);
+                    auto w = std::make_shared<Wall>(wcoords, INITIAL_WALL_STRENGTH - row / TUNNEL_UNIT / 3);
+                    Wall::walls.push_back(w);
+                    field->addPawn(w);
                 }
             }
         }
@@ -580,26 +602,34 @@ void spawnInitialEnemies() {
     std::shuffle(freeBaseCoordinates.begin(), freeBaseCoordinates.end(), rng);
 
     for (int i = 0; i < INITIAL_ARCHERS; i++) {
-        field->addPawn(new Archer(freeBaseCoordinates.front()));
+        auto a = std::make_shared<Archer>(freeBaseCoordinates.front());
+        Archer::archers.push_back(a);
+        field->addPawn(a);
         freeBaseCoordinates.pop_front();
     }
     for (int i = 0; i < INITIAL_WORMS; i++) {
-        field->addPawn(new Worm(freeBaseCoordinates.front(), Direction::UP));
+        auto w = std::make_shared<Worm>(freeBaseCoordinates.front(), Direction::UP);
+        Worm::worms.push_back(w);
+        field->addPawn(w);
         freeBaseCoordinates.pop_front();
     }
 }
 
 void spawnEnemies() {
     if (Archer::spawning(rng)) {
-        sista::Coordinates coords = {HEIGHT - 1, rand() % WIDTH};
+        sista::Coordinates coords = {HEIGHT - 1, (unsigned short)(rand() % WIDTH)};
         if (field->isFree(coords)) {
-            field->addPrintPawn(new Archer(coords));
+            auto a = std::make_shared<Archer>(coords);
+            Archer::archers.push_back(a);
+            field->addPrintPawn(a);
         }
     }
     if (Worm::spawning(rng)) {
-        sista::Coordinates coords = {HEIGHT - 1, rand() % WIDTH};
+        sista::Coordinates coords = {HEIGHT - 1, (unsigned short)(rand() % WIDTH)};
         if (field->isFree(coords)) {
-            field->addPrintPawn(new Worm(coords, Direction::UP));
+            auto w = std::make_shared<Worm>(coords, Direction::UP);
+            Worm::worms.push_back(w);
+            field->addPrintPawn(w);
         }
     }
 }
@@ -622,42 +652,50 @@ void act(char input_) {
     switch (input_) {
         case 'w': case 'W': {
             std::lock_guard<std::mutex> lock(streamMutex);
+            if (pause_) break;
             Player::player->move(Direction::UP);
             break;
         }
         case 'a': case 'A': {
             std::lock_guard<std::mutex> lock(streamMutex);
+            if (pause_) break;
             Player::player->move(Direction::LEFT);
             break;
         }
         case 's': case 'S': {
             std::lock_guard<std::mutex> lock(streamMutex);
+            if (pause_) break;
             Player::player->move(Direction::DOWN);
             break;
         }
         case 'd': case 'D': {
             std::lock_guard<std::mutex> lock(streamMutex);
+            if (pause_) break;
             Player::player->move(Direction::RIGHT);
             break;
         }
 
         case 'j': case 'J': {
             std::lock_guard<std::mutex> lock(streamMutex);
+            if (pause_) break;
             Player::player->shoot(Direction::LEFT);
             break;
         }
         case 'k': case 'K': {
             std::lock_guard<std::mutex> lock(streamMutex);
+            if (pause_) break;
             Player::player->shoot(Direction::DOWN);
             break;
         }
         case 'l': case 'L': {
             std::lock_guard<std::mutex> lock(streamMutex);
+            if (pause_) break;
             Player::player->shoot(Direction::RIGHT);
             break;
         }
         case 'i': case 'I': {
             std::lock_guard<std::mutex> lock(streamMutex);
+            if (pause_) break;
             Player::player->shoot(Direction::UP);
             break;
         }
@@ -694,15 +732,15 @@ void act(char input_) {
 }
 
 void printEndInformation(EndReason endReason) {
-    cursor.set(HEIGHT, WIDTH + 10);
+    cursor.goTo(HEIGHT, WIDTH + 10);
     
-    ANSI::reset();
-    ANSI::setAttribute(ANSI::Attribute::BLINK);
+    sista::resetAnsi();
+    sista::setAttribute(sista::Attribute::BLINK);
     switch (endReason) {
         case EndReason::EATEN:
             std::cout << "You have been eaten by a ";
             Worm::wormHeadStyle.apply();
-            ANSI::setAttribute(ANSI::Attribute::BLINK);
+            sista::setAttribute(sista::Attribute::BLINK);
             std::cout << "WORM";
             break;
         case EndReason::QUIT:
@@ -711,13 +749,13 @@ void printEndInformation(EndReason endReason) {
         case EndReason::SHOT:
             std::cout << "You have been shot with a ";
             EnemyBullet::enemyBulletStyle.apply();
-            ANSI::setAttribute(ANSI::Attribute::BLINK);
+            sista::setAttribute(sista::Attribute::BLINK);
             std::cout << "BULLET";
             break;
         case EndReason::STABBED:
             std::cout << "You have been stabbed by an ";
             Archer::archerStyle.apply();
-            ANSI::setAttribute(ANSI::Attribute::BLINK);
+            sista::setAttribute(sista::Attribute::BLINK);
             std::cout << "ARCHER";
             break;
         case EndReason::STARVED:
@@ -734,33 +772,15 @@ void printEndInformation(EndReason endReason) {
 }
 
 void deallocateAll() {
-    for (auto wall : Wall::walls) {
-        delete wall;
-    }
-    for (auto bullet : Bullet::bullets) {
-        delete bullet;
-    }
-    for (auto chest : Chest::chests) {
-        delete chest;
-    }
-    for (auto portal : Portal::portals) {
-        delete portal;
-    }
-    for (auto mine : Mine::mines) {
-        delete mine;
-    }
-    for (auto bullet : EnemyBullet::enemyBullets) {
-        delete bullet;
-    }
-    for (auto archer : Archer::archers) {
-        delete archer;
-    }
-    for (auto wormBody : WormBody::wormBodies) {
-        delete wormBody;
-    }
-    for (auto worm : Worm::worms) {
-        delete worm;
-    }
+    Wall::walls.clear();
+    Bullet::bullets.clear();
+    Chest::chests.clear();
+    Portal::portals.clear();
+    Mine::mines.clear();
+    EnemyBullet::enemyBullets.clear();
+    Archer::archers.clear();
+    WormBody::wormBodies.clear();
+    Worm::worms.clear();
 }
 
 std::unordered_map<Direction, sista::Coordinates> directionMap = {

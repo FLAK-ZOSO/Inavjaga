@@ -14,11 +14,28 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest]
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
+
+      - name: Checkout Sista dependency
+        uses: actions/checkout@v6
+        with:
+          repository: FLAK-ZOSO/Sista
+          path: sista
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Build and install Sista (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: |
+          set -e
+          cd sista
+          sudo make install
+          cd ..
 
       - name: Run make
         run: make

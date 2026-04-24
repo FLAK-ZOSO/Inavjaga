@@ -1,13 +1,13 @@
-#include "../include/sista/sista.hpp"
 #include "direction.hpp"
 #include "entity.hpp"
 #include <random>
+#include <memory>
 #pragma once
 
 class Archer : public Entity {
 public:
-    static ANSI::Settings archerStyle;
-    static std::vector<Archer*> archers;
+    static sista::ANSISettings archerStyle;
+    static std::vector<std::shared_ptr<Archer>> archers;
     static std::bernoulli_distribution shooting;
     static std::bernoulli_distribution moving;
     static std::bernoulli_distribution spawning;

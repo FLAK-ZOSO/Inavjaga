@@ -1,5 +1,6 @@
 inavjaga
 .vscode/
+*.d
 *.o
 *.exe
 *.out

@@ -4,16 +4,16 @@
 #include "worm.hpp"
 #include "constants.hpp"
 
-extern sista::SwappableField* field;
+extern std::shared_ptr<sista::SwappableField> field;
 extern std::mt19937 rng;
 
 Mine::Mine(sista::Coordinates coordinates) : Entity('*', coordinates, mineStyle, Type::MINE), triggered(false) {
-    Mine::mines.push_back(this);
+    // ownership moved to creator via std::shared_ptr; do not push here
 }
 void Mine::remove() {
-    Mine::mines.erase(std::find(Mine::mines.begin(), Mine::mines.end(), this));
+    [[maybe_unused]] auto keepAlive = Entity::keepAliveFrom(Mine::mines, this);
     field->erasePawn(this);
-    delete this;
+    Entity::removeOwner(Mine::mines, this);
 }
 void Mine::trigger() {
     if (this->triggered) return;
@@ -36,7 +36,7 @@ void Mine::explode() {
                         break;
                     case Type::WALL: {
                         int damage = mineDamage(rng);
-                        while (!((Wall*)entity)->getHit() && --damage);
+                        while (!((Wall*)entity)->takeHit() && --damage);
                         break;
                     }
                     case Type::PLAYER: case Type::PORTAL:
@@ -48,7 +48,7 @@ void Mine::explode() {
                         ((WormBody*)entity)->die();
                         break;
                     case Type::WORM_HEAD:
-                        ((Worm*)entity)->getHit();
+                        ((Worm*)entity)->takeHit();
                         break;
                     default:
                         entity->remove();
@@ -60,13 +60,13 @@ void Mine::explode() {
 }
 std::bernoulli_distribution Mine::explosion(MINE_EXPLOSION_IN_FRAME_PROBABILITY);
 std::uniform_int_distribution<int> Mine::mineDamage(MINE_MINIMUM_DAMAGE, MINE_MAXIMUM_DAMAGE);
-ANSI::Settings Mine::mineStyle = {
-    ANSI::RGBColor(200, 100, 200),
+sista::ANSISettings Mine::mineStyle = {
+    sista::RGBColor(200, 100, 200),
     RGB_ROCKS_FOREGROUND,
-    ANSI::Attribute::BRIGHT
+    sista::Attribute::BRIGHT
 };
-ANSI::Settings Mine::triggeredMineStyle = {
+sista::ANSISettings Mine::triggeredMineStyle = {
     RGB_BLACK,
-    ANSI::RGBColor(0xff, 0, 0),
-    ANSI::Attribute::BLINK
+    sista::RGBColor(0xff, 0, 0),
+    sista::Attribute::BLINK
 };

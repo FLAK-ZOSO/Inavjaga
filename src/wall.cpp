@@ -8,18 +8,18 @@
 
 extern std::unordered_map<Direction, sista::Coordinates> directionMap;
 extern std::map<int, std::vector<int>> breaches; // Central breaches, "holes"
-extern sista::SwappableField* field;
+extern std::shared_ptr<sista::SwappableField> field;
 
 Wall::Wall(sista::Coordinates coordinates, short int strength) :
     Entity('#', coordinates, wallStyle, Type::WALL), strength(strength) {
-    Wall::walls.push_back(this);
+    // ownership moved to creator via std::shared_ptr; do not push here
 }
 void Wall::remove() {
-    Wall::walls.erase(std::find(Wall::walls.begin(), Wall::walls.end(), this));
+    [[maybe_unused]] auto keepAlive = Entity::keepAliveFrom(Wall::walls, this);
     field->erasePawn(this);
-    delete this;
+    Entity::removeOwner(Wall::walls, this);
 }
-bool Wall::getHit() {
+bool Wall::takeHit() {
     if (--strength <= 0) {
         // Verify if this creates a new breach by a DFS
         std::stack<sista::Coordinates> dfs({
@@ -31,7 +31,7 @@ bool Wall::getHit() {
         std::set<sista::Coordinates> visited;
         visited.insert({coordinates});
         #if DEBUG
-        std::cerr << "Wall::getHit() - Starting DFS from {" << coordinates.y << "," << coordinates.x << "}\n";
+        std::cerr << "Wall::takeHit() - Starting DFS from {" << coordinates.y << "," << coordinates.x << "}\n";
         #endif
         sista::Coordinates coords, breach;
         bool foundBelowExit = false;
@@ -40,7 +40,7 @@ bool Wall::getHit() {
             coords = dfs.top();
             dfs.pop();
             #if DEBUG
-            std::cerr << "\tWall::getHit() - DFS coords: {" << coords.y << "," << coords.x << "}\n";
+            std::cerr << "\tWall::takeHit() - DFS coords: {" << coords.y << "," << coords.x << "}\n";
             #endif
 
             if (field->isOutOfBounds(coords)) continue; // Exiting the field
@@ -56,13 +56,13 @@ bool Wall::getHit() {
                 // The breach was right above for how neighbouring is defined in a grid
                 breach = coords + directionMap[Direction::UP];
                 #if DEBUG
-                std::cerr << "\t\tWall::getHit() - Found breach below exit at {" << breach.y << "," << breach.x << "}\n";
+                std::cerr << "\t\tWall::takeHit() - Found breach below exit at {" << breach.y << "," << breach.x << "}\n";
                 #endif
             }
             if (coords.y % (TUNNEL_UNIT * 3) < TUNNEL_UNIT * 2) { // Exiting the breach on the upper side
                 foundAboveExit = true;
                 #if DEBUG
-                std::cerr << "\t\tWall::getHit() - Found breach above exit at {" << coords.y << "," << coords.x << "}\n";
+                std::cerr << "\t\tWall::takeHit() - Found breach above exit at {" << coords.y << "," << coords.x << "}\n";
                 #endif
                 continue;
             }
@@ -70,14 +70,14 @@ bool Wall::getHit() {
                 && (coords.y / TUNNEL_UNIT / 3) % 2 == 0) {
                 // On "even" tunnels we should not consider part of the breach the part to the left
                 #if DEBUG
-                std::cerr << "\t\tWall::getHit() - Skipping left part of the breach at {" << coords.y << "," << coords.x << "}\n";
+                std::cerr << "\t\tWall::takeHit() - Skipping left part of the breach at {" << coords.y << "," << coords.x << "}\n";
                 #endif
                 continue;
             } else if (coords.x >= WIDTH-(TUNNEL_UNIT * 2)
                         && (coords.y / TUNNEL_UNIT / 3) % 2 == 1) {
                 // On "odd" tunnels we should not consider part of the breach the part to the right
                 #if DEBUG
-                std::cerr << "\t\tWall::getHit() - Skipping right part of the breach at {" << coords.y << "," << coords.x << "}\n";
+                std::cerr << "\t\tWall::takeHit() - Skipping right part of the breach at {" << coords.y << "," << coords.x << "}\n";
                 #endif
                 continue;
             }
@@ -101,8 +101,8 @@ bool Wall::getHit() {
     return false;
 }
 std::bernoulli_distribution Wall::wearing(WALL_WEARING_PROBABILITY);
-ANSI::Settings Wall::wallStyle = {
+sista::ANSISettings Wall::wallStyle = {
     RGB_ROCKS_FOREGROUND,
     RGB_ROCKS_BACKGROUND,
-    ANSI::Attribute::BRIGHT
+    sista::Attribute::BRIGHT
 };

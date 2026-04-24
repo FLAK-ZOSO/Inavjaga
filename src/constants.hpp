@@ -1,7 +1,7 @@
 #pragma once
 
-#define VERSION "1.0.0-beta.5"
-#define DATE "2025-07-16"
+#define VERSION "1.0.0-beta.6"
+#define DATE "2026-04-24"
 #define AUTHOR "FLAK-ZOSO"
 
 
@@ -42,9 +42,9 @@
 #define RESPAWN_COORDINATES {TUNNEL_UNIT,WIDTH-TUNNEL_UNIT} // The coordinates where the player respawns after death
 
 // Colors
-#define RGB_BLACK ANSI::RGBColor(0,0,0)
-#define RGB_ROCKS_FOREGROUND ANSI::RGBColor(10,10,10)
-#define RGB_ROCKS_BACKGROUND ANSI::RGBColor(100,100,100)
+#define RGB_BLACK sista::RGBColor(0,0,0)
+#define RGB_ROCKS_FOREGROUND sista::RGBColor(10,10,10)
+#define RGB_ROCKS_BACKGROUND sista::RGBColor(100,100,100)
 
 // Damage
 #define MINE_MINIMUM_DAMAGE 1 // The minimum damage a mine can deal

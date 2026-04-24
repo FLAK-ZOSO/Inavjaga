@@ -1,18 +1,18 @@
 #include "constants.hpp"
 #include "chest.hpp"
 
-extern sista::SwappableField* field;
+extern std::shared_ptr<sista::SwappableField> field;
 
 Chest::Chest(sista::Coordinates coordinates, Inventory inventory) : Entity('C', coordinates, chestStyle, Type::CHEST), inventory(inventory) {
-    Chest::chests.push_back(this);
+    // ownership moved to creator via std::shared_ptr; do not push here
 }
 void Chest::remove() {
-    Chest::chests.erase(std::find(Chest::chests.begin(), Chest::chests.end(), this));
+    [[maybe_unused]] auto keepAlive = Entity::keepAliveFrom(Chest::chests, this);
     field->erasePawn(this);
-    delete this;
+    Entity::removeOwner(Chest::chests, this);
 }
-ANSI::Settings Chest::chestStyle = {
-    ANSI::RGBColor(193, 201, 104),
+sista::ANSISettings Chest::chestStyle = {
+    sista::RGBColor(193, 201, 104),
     RGB_BLACK,
-    ANSI::Attribute::REVERSE
+    sista::Attribute::REVERSE
 };

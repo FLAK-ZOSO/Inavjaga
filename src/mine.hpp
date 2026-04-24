@@ -1,13 +1,13 @@
-#include "../include/sista/sista.hpp"
 #include "entity.hpp"
 #include <random>
+#include <memory>
 #pragma once
 
 class Mine : public Entity {
 public:
-    static ANSI::Settings mineStyle;
-    static ANSI::Settings triggeredMineStyle;
-    static std::vector<Mine*> mines;
+    static sista::ANSISettings mineStyle;
+    static sista::ANSISettings triggeredMineStyle;
+    static std::vector<std::shared_ptr<Mine>> mines;
     static std::bernoulli_distribution explosion;
     static std::uniform_int_distribution<int> mineDamage;
     bool triggered;

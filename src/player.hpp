@@ -1,4 +1,3 @@
-#include "../include/sista/sista.hpp"
 #include "constants.hpp"
 #include "direction.hpp"
 #include "entity.hpp"
@@ -8,12 +7,12 @@
 
 extern const Inventory INITIAL_INVENTORY;
 extern std::unordered_map<Direction, sista::Coordinates> directionMap;
-extern sista::SwappableField* field;
+extern std::shared_ptr<sista::SwappableField> field;
 
 class Player : public Entity {
 public:
-    static ANSI::Settings playerStyle;
-    static Player* player;
+    static sista::ANSISettings playerStyle;
+    static std::shared_ptr<Player> player;
     enum Mode {
         COLLECT, BULLET,
         DUMPCHEST, TRAP, MINE

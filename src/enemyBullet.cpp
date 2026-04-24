@@ -8,19 +8,19 @@
 
 extern std::unordered_map<Direction, char> directionSymbol;
 extern std::unordered_map<Direction, sista::Coordinates> directionMap;
-extern sista::SwappableField* field;
+extern std::shared_ptr<sista::SwappableField> field;
 extern bool dead;
 enum EndReason {STARVED, SHOT, EATEN, STABBED, TOUCHDOWN, QUIT};
 void printEndInformation(EndReason);
 
 EnemyBullet::EnemyBullet(sista::Coordinates coordinates, Direction direction) :
     Entity(directionSymbol[direction], coordinates, enemyBulletStyle, Type::ENEMY_BULLET), direction(direction), collided(false) {
-    EnemyBullet::enemyBullets.push_back(this);
+    // ownership moved to creator via std::shared_ptr; do not push here
 }
 void EnemyBullet::remove() {
-    EnemyBullet::enemyBullets.erase(std::find(EnemyBullet::enemyBullets.begin(), EnemyBullet::enemyBullets.end(), this));
+    [[maybe_unused]] auto keepAlive = Entity::keepAliveFrom(EnemyBullet::enemyBullets, this);
     field->erasePawn(this);
-    delete this;
+    Entity::removeOwner(EnemyBullet::enemyBullets, this);
 }
 void EnemyBullet::move() {
     sista::Coordinates next = this->coordinates + directionMap[direction];
@@ -33,7 +33,7 @@ void EnemyBullet::move() {
         Type entityType = entity->type;
         switch (entityType) {
             case Type::WALL:
-                ((Wall*)entity)->getHit();
+                ((Wall*)entity)->takeHit();
                 break;
             case Type::MINE:
                 ((Mine*)entity)->trigger();
@@ -52,7 +52,7 @@ void EnemyBullet::move() {
             }
             case Type::WORM_HEAD: {
                 Worm* worm = (Worm*)entity;
-                worm->getHit();
+                worm->takeHit();
                 break;
             }
             case Type::WORM_BODY: {
@@ -70,8 +70,8 @@ void EnemyBullet::move() {
         this->remove(); // Hit something and the situation was not handled
     }
 }
-ANSI::Settings EnemyBullet::enemyBulletStyle = {
-    ANSI::ForegroundColor::F_GREEN,
-    ANSI::BackgroundColor::B_BLACK,
-    ANSI::Attribute::BRIGHT
+sista::ANSISettings EnemyBullet::enemyBulletStyle = {
+    sista::ForegroundColor::GREEN,
+    sista::BackgroundColor::BLACK,
+    sista::Attribute::BRIGHT
 };

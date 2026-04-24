@@ -16,11 +16,28 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest]
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
+
+      - name: Checkout Sista dependency
+        uses: actions/checkout@v6
+        with:
+          repository: FLAK-ZOSO/Sista
+          path: sista
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0 # We need at least one tag to get the version number in the Makefile
+          fetch-tags: true
+
+      - name: Build and install Sista (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: |
+          set -e
+          cd sista
+          sudo make install
+          cd ..
 
       - name: Run make
         run: make
@@ -50,7 +67,15 @@ jobs:
           fi
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: inavjaga-${{ steps.artifact-name.outputs.name }}
           path: ${{ steps.find-exe.outputs.exe_path }}
+          archive: false
+
+      - name: Upload artifact compressed
+        uses: actions/upload-artifact@v7
+        with:
+          name: inavjaga-${{ steps.artifact-name.outputs.name }}-compressed
+          path: ${{ steps.find-exe.outputs.exe_path }}
+          archive: true
