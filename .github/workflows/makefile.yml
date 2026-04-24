@@ -29,6 +29,7 @@ jobs:
           path: sista
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0 # We need at least one tag to get the version number in the Makefile
+          fetch-tags: true
 
       - name: Build and install Sista (Linux/macOS)
         if: runner.os != 'Windows'
@@ -66,7 +67,8 @@ jobs:
           fi
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: inavjaga-${{ steps.artifact-name.outputs.name }}
           path: ${{ steps.find-exe.outputs.exe_path }}
+          archive: false

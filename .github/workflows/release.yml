@@ -18,15 +18,16 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Checkout Sista dependency
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: FLAK-ZOSO/Sista
           path: sista
           token: ${{ secrets.GITHUB_TOKEN }}
-          fetch-depth: 1
+          fetch-depth: 0
+          fetch-tags: true
 
       - name: Build and install Sista (Linux/macOS)
         if: runner.os != 'Windows'
