@@ -186,6 +186,7 @@ void Worm::die() {
         WormBody* tail = tail_ptr.get();
         tail->die(); // removes itself from head->body and wormBodies
     }
+    auto keepAlive = Entity::keepAliveFrom(Worm::worms, this);
     field->erasePawn(this);
     {
         auto c = std::make_shared<Chest>(
@@ -198,10 +199,7 @@ void Worm::die() {
         Chest::chests.push_back(c);
         field->addPrintPawn(c);
     }
-    auto it = std::find_if(Worm::worms.begin(), Worm::worms.end(), [this](const std::shared_ptr<Worm>& p){ return p.get() == this; });
-    if (it != Worm::worms.end()) {
-        Worm::worms.erase(it);
-    }
+    Entity::removeOwner(Worm::worms, this);
 }
 void Worm::remove() {
     [[maybe_unused]] auto keepAlive = Entity::keepAliveFrom(Worm::worms, this);
