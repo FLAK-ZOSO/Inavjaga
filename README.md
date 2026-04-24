@@ -6,6 +6,8 @@
 
 ## Installation
 
+**Warning**: if you want to play on Windows and/or don't want to install the Sista system library on MacOS, check the [`standalone`](https://github.com/FLAK-ZOSO/Inavjaga/tree/standalone) branch and releases with version lower or equal to [`1.0.0-beta.5`](https://github.com/FLAK-ZOSO/Inavjaga/releases/tag/v1.0.0-beta.5).
+
 ### From release executable
 
 You can download the latest release executable for your operative system from the [releases page](https://github.com/FLAK-ZOSO/Inavjaga/releases).
