@@ -14,7 +14,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest]
 
     steps:
       - name: Checkout code
@@ -34,7 +34,7 @@ jobs:
           set -e
           cd sista
           sudo make install
-          cd ,,
+          cd ..
 
       - name: Run make
         run: make
