@@ -42,9 +42,9 @@ void WormBody::die() {
     // destruction handled by shared_ptr owners
 }
 void WormBody::remove() {
-    auto it = std::find_if(WormBody::wormBodies.begin(), WormBody::wormBodies.end(), [this](const std::shared_ptr<WormBody>& p){ return p.get() == this; });
-    if (it != WormBody::wormBodies.end()) WormBody::wormBodies.erase(it);
+    [[maybe_unused]] auto keepAlive = Entity::keepAliveFrom(WormBody::wormBodies, this);
     field->erasePawn(this);
+    Entity::removeOwner(WormBody::wormBodies, this);
 }
 sista::ANSISettings WormBody::wormBodyStyle = {
     sista::RGBColor(50, 0xff, 150),
