@@ -653,42 +653,50 @@ void act(char input_) {
     switch (input_) {
         case 'w': case 'W': {
             std::lock_guard<std::mutex> lock(streamMutex);
+            if (pause_) break;
             Player::player->move(Direction::UP);
             break;
         }
         case 'a': case 'A': {
             std::lock_guard<std::mutex> lock(streamMutex);
+            if (pause_) break;
             Player::player->move(Direction::LEFT);
             break;
         }
         case 's': case 'S': {
             std::lock_guard<std::mutex> lock(streamMutex);
+            if (pause_) break;
             Player::player->move(Direction::DOWN);
             break;
         }
         case 'd': case 'D': {
             std::lock_guard<std::mutex> lock(streamMutex);
+            if (pause_) break;
             Player::player->move(Direction::RIGHT);
             break;
         }
 
         case 'j': case 'J': {
             std::lock_guard<std::mutex> lock(streamMutex);
+            if (pause_) break;
             Player::player->shoot(Direction::LEFT);
             break;
         }
         case 'k': case 'K': {
             std::lock_guard<std::mutex> lock(streamMutex);
+            if (pause_) break;
             Player::player->shoot(Direction::DOWN);
             break;
         }
         case 'l': case 'L': {
             std::lock_guard<std::mutex> lock(streamMutex);
+            if (pause_) break;
             Player::player->shoot(Direction::RIGHT);
             break;
         }
         case 'i': case 'I': {
             std::lock_guard<std::mutex> lock(streamMutex);
+            if (pause_) break;
             Player::player->shoot(Direction::UP);
             break;
         }
