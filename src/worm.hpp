@@ -31,8 +31,8 @@ public:
     static Direction options[2];
     std::vector<std::shared_ptr<WormBody>> body;
     Direction direction;
-    bool collided;
     short int hp;
+    bool collided;
 
     Worm(sista::Coordinates);
     Worm(sista::Coordinates, Direction);
