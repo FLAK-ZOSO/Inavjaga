@@ -72,3 +72,10 @@ jobs:
           name: inavjaga-${{ steps.artifact-name.outputs.name }}
           path: ${{ steps.find-exe.outputs.exe_path }}
           archive: false
+
+      - name: Upload artifact compressed
+        uses: actions/upload-artifact@v7
+        with:
+          name: inavjaga-${{ steps.artifact-name.outputs.name }}-compressed
+          path: ${{ steps.find-exe.outputs.exe_path }}
+          archive: true
