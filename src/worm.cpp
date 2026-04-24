@@ -25,6 +25,7 @@ void WormBody::die() {
     std::cerr << "WormBody::die() called for " << this << " at {" << drop.y << ", " << drop.x << "}" << std::endl;
     #endif
     // Free the pawn's coordinates first so we can place a chest there
+    [[maybe_unused]] auto keepAlive = Entity::keepAliveFrom(WormBody::wormBodies, this);
     field->erasePawn(this);
     // create chest and keep ownership in Chest::chests to ensure it stays alive
     {
@@ -32,12 +33,10 @@ void WormBody::die() {
         Chest::chests.push_back(c);
         field->addPrintPawn(c);
     }
-    auto wormBodyIt = std::find_if(WormBody::wormBodies.begin(), WormBody::wormBodies.end(), [this](const std::shared_ptr<WormBody>& p){ return p.get() == this; });
-    if (wormBodyIt != WormBody::wormBodies.end()) WormBody::wormBodies.erase(wormBodyIt);
+    Entity::removeOwner(WormBody::wormBodies, this);
     auto head = this->head.lock();
     if (head) {
-        auto headBodyIt = std::find_if(head->body.begin(), head->body.end(), [this](const std::shared_ptr<WormBody>& p){ return p.get() == this; });
-        if (headBodyIt != head->body.end()) head->body.erase(headBodyIt);
+        Entity::removeOwner(head->body, this);
     }
     // destruction handled by shared_ptr owners
 }
