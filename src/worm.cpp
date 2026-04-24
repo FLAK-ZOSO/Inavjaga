@@ -9,7 +9,7 @@
 
 extern std::unordered_map<Direction, char> directionSymbol;
 extern std::unordered_map<Direction, sista::Coordinates> directionMap;
-extern sista::SwappableField* field;
+extern std::shared_ptr<sista::SwappableField> field;
 extern std::mt19937 rng;
 extern std::bernoulli_distribution dumbMoveDistribution;
 extern bool dead;
@@ -74,7 +74,7 @@ void Worm::move() {
                 next = coordinates + directionMap[direction];
                 if (field->isOutOfBounds(next)) {
                     direction = oldDirection;
-                    this->getHit();
+                    this->takeHit();
                     return;
                 }
             } else if (direction == toTheRight) {
@@ -82,7 +82,7 @@ void Worm::move() {
                 next = coordinates + directionMap[direction];
                 if (field->isOutOfBounds(next)) {
                     direction = oldDirection;
-                    this->getHit();
+                    this->takeHit();
                     return;
                 }
             }
@@ -125,14 +125,14 @@ void Worm::move() {
                 break;
             case Type::WALL:
                 if (((Wall*)entity)->strength > 1)
-                    ((Wall*)entity)->getHit(); // They can weaken a wall but not destroy it
+                    ((Wall*)entity)->takeHit(); // They can weaken a wall but not destroy it
                 this->turn(options[rand() % 2]);
                 break;
             case Type::WORM_HEAD:
                 if (((Worm*)entity)->hp <= 1) {
                     ((Worm*)entity)->collided = true;
                 }
-                ((Worm*)entity)->getHit();
+                ((Worm*)entity)->takeHit();
             case Type::PORTAL:
                 this->turn(options[rand() % 2]);
                 break;
@@ -172,7 +172,7 @@ void Worm::turn(Direction direction_) {
     else if (direction_ == Direction::RIGHT)
         this->direction = (Direction)((this->direction + 1) % 4);
 }
-void Worm::getHit() {
+void Worm::takeHit() {
     if (--hp <= 0) {
         if (collided) return;
         this->die();
@@ -204,11 +204,9 @@ void Worm::die() {
     }
 }
 void Worm::remove() {
-    auto it = std::find_if(Worm::worms.begin(), Worm::worms.end(), [this](const std::shared_ptr<Worm>& p){ return p.get() == this; });
-    std::shared_ptr<Worm> self;
-    if (it != Worm::worms.end()) self = *it;
+    [[maybe_unused]] auto keepAlive = Entity::keepAliveFrom(Worm::worms, this);
     field->erasePawn(this);
-    if (it != Worm::worms.end()) Worm::worms.erase(it);
+    Entity::removeOwner(Worm::worms, this);
 }
 Direction Worm::options[2] = {Direction::LEFT, Direction::RIGHT};
 std::bernoulli_distribution Worm::turning(WORM_TURNING_PROBABILITY);

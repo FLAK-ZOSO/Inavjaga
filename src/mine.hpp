@@ -1,4 +1,3 @@
-#include "../include/sista/sista.hpp"
 #include "entity.hpp"
 #include <random>
 #include <memory>

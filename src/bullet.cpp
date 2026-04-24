@@ -8,18 +8,16 @@
 
 extern std::unordered_map<Direction, char> directionSymbol;
 extern std::unordered_map<Direction, sista::Coordinates> directionMap;
-extern sista::SwappableField* field;
+extern std::shared_ptr<sista::SwappableField> field;
 
 Bullet::Bullet(sista::Coordinates coordinates, Direction direction) :
     Entity(directionSymbol[direction], coordinates, bulletStyle, Type::BULLET), direction(direction), collided(false) {
     // ownership moved to creator via std::shared_ptr; do not push here
 }
 void Bullet::remove() {
-    auto it = std::find_if(Bullet::bullets.begin(), Bullet::bullets.end(), [this](const std::shared_ptr<Bullet>& p){ return p.get() == this; });
-    std::shared_ptr<Bullet> self;
-    if (it != Bullet::bullets.end()) self = *it;
+    [[maybe_unused]] auto keepAlive = Entity::keepAliveFrom(Bullet::bullets, this);
     field->erasePawn(this);
-    if (it != Bullet::bullets.end()) Bullet::bullets.erase(it);
+    Entity::removeOwner(Bullet::bullets, this);
 }
 void Bullet::move() {
     sista::Coordinates next = this->coordinates + directionMap[direction];
@@ -32,7 +30,7 @@ void Bullet::move() {
         Type entityType = entity->type;
         switch (entityType) {
             case Type::WALL:
-                ((Wall*)entity)->getHit();
+                ((Wall*)entity)->takeHit();
                 break;
             case Type::MINE:
                 ((Mine*)entity)->trigger();
@@ -55,7 +53,7 @@ void Bullet::move() {
             }
             case Type::WORM_HEAD: {
                 Worm* worm = (Worm*)entity;
-                worm->getHit();
+                worm->takeHit();
                 break;
             }
             case Type::WORM_BODY: {

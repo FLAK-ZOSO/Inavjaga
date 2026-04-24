@@ -1,4 +1,3 @@
-#include "../include/sista/sista.hpp"
 #include "direction.hpp"
 #include "entity.hpp"
 #include <random>
@@ -42,6 +41,6 @@ public:
     void move();
     void turn();
     void turn(Direction);
-    void getHit();
+    void takeHit();
     void die();
 };

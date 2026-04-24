@@ -1,4 +1,3 @@
-#include "../include/sista/sista.hpp"
 #include "inventory.hpp"
 #include "entity.hpp"
 #include <memory>

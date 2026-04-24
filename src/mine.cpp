@@ -4,18 +4,16 @@
 #include "worm.hpp"
 #include "constants.hpp"
 
-extern sista::SwappableField* field;
+extern std::shared_ptr<sista::SwappableField> field;
 extern std::mt19937 rng;
 
 Mine::Mine(sista::Coordinates coordinates) : Entity('*', coordinates, mineStyle, Type::MINE), triggered(false) {
     // ownership moved to creator via std::shared_ptr; do not push here
 }
 void Mine::remove() {
-    auto it = std::find_if(Mine::mines.begin(), Mine::mines.end(), [this](const std::shared_ptr<Mine>& p){ return p.get() == this; });
-    std::shared_ptr<Mine> self;
-    if (it != Mine::mines.end()) self = *it;
+    [[maybe_unused]] auto keepAlive = Entity::keepAliveFrom(Mine::mines, this);
     field->erasePawn(this);
-    if (it != Mine::mines.end()) Mine::mines.erase(it);
+    Entity::removeOwner(Mine::mines, this);
 }
 void Mine::trigger() {
     if (this->triggered) return;
@@ -38,7 +36,7 @@ void Mine::explode() {
                         break;
                     case Type::WALL: {
                         int damage = mineDamage(rng);
-                        while (!((Wall*)entity)->getHit() && --damage);
+                        while (!((Wall*)entity)->takeHit() && --damage);
                         break;
                     }
                     case Type::PLAYER: case Type::PORTAL:
@@ -50,7 +48,7 @@ void Mine::explode() {
                         ((WormBody*)entity)->die();
                         break;
                     case Type::WORM_HEAD:
-                        ((Worm*)entity)->getHit();
+                        ((Worm*)entity)->takeHit();
                         break;
                     default:
                         entity->remove();

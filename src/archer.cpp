@@ -17,7 +17,7 @@ extern std::unordered_map<Direction, char> directionSymbol;
 extern std::unordered_map<Direction, sista::Coordinates> directionMap;
 extern std::map<int, std::vector<int>> passages; // {y, {x1, x2, x3...}}
 extern std::map<int, std::vector<int>> breaches; // Central breaches, "holes"
-extern sista::SwappableField* field;
+extern std::shared_ptr<sista::SwappableField> field;
 extern std::mt19937 rng;
 extern std::bernoulli_distribution dumbMoveDistribution;
 extern bool dead;
@@ -222,7 +222,7 @@ bool Archer::shoot(Direction direction) {
         Entity* entity = (Entity*)field->getPawn(target);
         switch (entity->type) {
             case Type::WALL:
-                ((Wall*)entity)->getHit();
+                ((Wall*)entity)->takeHit();
                 break;
             case Type::PLAYER: // Counts as a dagger hit
                 printEndInformation(EndReason::STABBED);
@@ -239,11 +239,9 @@ bool Archer::shoot(Direction direction) {
     return false;
 }
 void Archer::die() {
-    auto it = std::find_if(Archer::archers.begin(), Archer::archers.end(), [this](const std::shared_ptr<Archer>& p){ return p.get() == this; });
-    std::shared_ptr<Archer> self;
-    if (it != Archer::archers.end()) self = *it;
+    [[maybe_unused]] auto keepAlive = Entity::keepAliveFrom(Archer::archers, this);
     field->erasePawn(this);
-    if (it != Archer::archers.end()) Archer::archers.erase(it);
+    Entity::removeOwner(Archer::archers, this);
     {
         auto c = std::make_shared<Chest>(coordinates, Inventory{LOOT_ARCHER_CLAY, LOOT_ARCHER_BULLETS, LOOT_ARCHER_MEAT});
         Chest::chests.push_back(c);
@@ -251,11 +249,9 @@ void Archer::die() {
     }
 }
 void Archer::remove() {
-    auto it = std::find_if(Archer::archers.begin(), Archer::archers.end(), [this](const std::shared_ptr<Archer>& p){ return p.get() == this; });
-    std::shared_ptr<Archer> self;
-    if (it != Archer::archers.end()) self = *it;
+    [[maybe_unused]] auto keepAlive = Entity::keepAliveFrom(Archer::archers, this);
     field->erasePawn(this);
-    if (it != Archer::archers.end()) Archer::archers.erase(it);
+    Entity::removeOwner(Archer::archers, this);
 }
 std::bernoulli_distribution Archer::moving(ARCHER_MOVING_PROBABILITY);
 std::bernoulli_distribution Archer::shooting(ARCHER_SHOOTING_PROBABILITY);

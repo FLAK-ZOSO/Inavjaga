@@ -8,7 +8,7 @@
 
 extern std::unordered_map<Direction, char> directionSymbol;
 extern std::unordered_map<Direction, sista::Coordinates> directionMap;
-extern sista::SwappableField* field;
+extern std::shared_ptr<sista::SwappableField> field;
 extern bool dead;
 enum EndReason {STARVED, SHOT, EATEN, STABBED, TOUCHDOWN, QUIT};
 void printEndInformation(EndReason);
@@ -18,11 +18,9 @@ EnemyBullet::EnemyBullet(sista::Coordinates coordinates, Direction direction) :
     // ownership moved to creator via std::shared_ptr; do not push here
 }
 void EnemyBullet::remove() {
-    auto it = std::find_if(EnemyBullet::enemyBullets.begin(), EnemyBullet::enemyBullets.end(), [this](const std::shared_ptr<EnemyBullet>& p){ return p.get() == this; });
-    std::shared_ptr<EnemyBullet> self;
-    if (it != EnemyBullet::enemyBullets.end()) self = *it;
+    [[maybe_unused]] auto keepAlive = Entity::keepAliveFrom(EnemyBullet::enemyBullets, this);
     field->erasePawn(this);
-    if (it != EnemyBullet::enemyBullets.end()) EnemyBullet::enemyBullets.erase(it);
+    Entity::removeOwner(EnemyBullet::enemyBullets, this);
 }
 void EnemyBullet::move() {
     sista::Coordinates next = this->coordinates + directionMap[direction];
@@ -35,7 +33,7 @@ void EnemyBullet::move() {
         Type entityType = entity->type;
         switch (entityType) {
             case Type::WALL:
-                ((Wall*)entity)->getHit();
+                ((Wall*)entity)->takeHit();
                 break;
             case Type::MINE:
                 ((Mine*)entity)->trigger();
@@ -54,7 +52,7 @@ void EnemyBullet::move() {
             }
             case Type::WORM_HEAD: {
                 Worm* worm = (Worm*)entity;
-                worm->getHit();
+                worm->takeHit();
                 break;
             }
             case Type::WORM_BODY: {

@@ -15,8 +15,10 @@ const Inventory INITIAL_INVENTORY {
 Player::Player(sista::Coordinates coordinates) : Entity('$', coordinates, playerStyle, Type::PLAYER), mode(Player::Mode::COLLECT), inventory(INITIAL_INVENTORY) {}
 Player::Player() : Entity('$', {0, 0}, playerStyle, Type::PLAYER), mode(Player::Mode::COLLECT), inventory(INITIAL_INVENTORY) {}
 void Player::remove() {
-    std::shared_ptr<Player> self;
-    if (Player::player.get() == this) self = Player::player;
+    [[maybe_unused]] std::shared_ptr<Player> keepAlive;
+    if (Player::player.get() == this) {
+        keepAlive = Player::player;
+    }
     field->erasePawn(this);
     if (Player::player.get() == this) {
         Player::player.reset();

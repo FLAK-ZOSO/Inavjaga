@@ -20,7 +20,7 @@ std::vector<std::shared_ptr<Archer>> Archer::archers;
 std::vector<std::shared_ptr<WormBody>> WormBody::wormBodies;
 std::vector<std::shared_ptr<Worm>> Worm::worms;
 
-sista::SwappableField* field;
+std::shared_ptr<sista::SwappableField> field;
 sista::Cursor cursor;
 sista::Border border(
     '@', {
@@ -45,8 +45,7 @@ int main(int argc, char* argv[]) {
     sista::resetAnsi(); // Reset the settings
     srand(time(0)); // Seed the random number generator
 
-    sista::SwappableField field_(WIDTH, HEIGHT);
-    field = &field_;
+    field = std::make_shared<sista::SwappableField>(WIDTH, HEIGHT);
     generateTunnels();
     sista::Coordinates spawn = SPAWN_COORDINATES;
     Player::player = std::make_shared<Player>(spawn);
@@ -191,7 +190,7 @@ int main(int argc, char* argv[]) {
             for (int j = 0; j < DAMAGED_WALLS_COUNT; j++) {
                 if (Wall::walls.empty()) break;
                 int index = std::uniform_int_distribution<int>(0, Wall::walls.size() - 1)(rng);
-                Wall::walls[index]->getHit();
+                Wall::walls[index]->takeHit();
             }
         }
         if (i % MEAT_DURATION_PERIOD == MEAT_DURATION_PERIOD - 1) {

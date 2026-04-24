@@ -1,4 +1,3 @@
-#include "../include/sista/sista.hpp"
 #include "entity.hpp"
 #include <random>
 #include <memory>
@@ -14,5 +13,5 @@ public:
     Wall(sista::Coordinates, short int);
     void remove() override;
 
-    bool getHit();
+    bool takeHit();
 };
