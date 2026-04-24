@@ -5,6 +5,9 @@ CXXFLAGS = -std=c++17 -Wpedantic -Wno-narrowing -g
 # Add /usr/local/lib to the library search path and embed an rpath into the binary.
 LDFLAGS = -L/usr/local/lib -L/usr/lib -lpthread -lSista -Wl,-rpath,/usr/local/lib
 
+# Set STATIC=0 to prefer dynamic linking, otherwise static linking is used
+STATIC ?= 1
+
 # List all your source files here
 SRC = inavjaga.cpp \
       src/inventory.cpp src/entity.cpp src/portal.cpp src/player.cpp src/archer.cpp src/worm.cpp src/wall.cpp src/bullet.cpp src/chest.cpp src/mine.cpp src/enemyBullet.cpp \
@@ -13,11 +16,18 @@ OBJ = $(SRC:.cpp=.o)
 
 all: inavjaga
 
+ifeq ($(STATIC),1)
 inavjaga: $(OBJ)
-	@echo "Linking with -static (if possible)..."
+	@echo "Trying to link statically..."
 	@($(CXX) $(CXXFLAGS) -static -o $@ $^ $(LDFLAGS) || \
 	  $(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS))
 	@echo "Inavjaga compiled successfully!"
+else
+inavjaga: $(OBJ)
+	@echo "Linking dynamically..."
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+	@echo "Inavjaga compiled successfully!"
+endif
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
