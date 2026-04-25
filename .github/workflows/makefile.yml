@@ -2,7 +2,7 @@ name: Build and Upload Executable
 
 on:
   push:
-    branches: [ main, windows-compile ]
+    branches: [ main ]
     paths:
       - 'Makefile'
       - 'include/**'
