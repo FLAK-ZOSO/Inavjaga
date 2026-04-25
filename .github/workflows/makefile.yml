@@ -44,7 +44,7 @@ jobs:
         shell: bash
         run: |
           if [[ "${{ runner.os }}" == "Windows" ]]; then
-            make USE_LOCAL_SISTA=1 STATIC=0
+            make USE_LOCAL_SISTA=1 STATIC=1
           else
             make
           fi
