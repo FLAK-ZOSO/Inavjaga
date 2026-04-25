@@ -1,7 +1,7 @@
 #pragma once
 
-#define VERSION "1.0.0-beta.6"
-#define DATE "2026-04-24"
+#define VERSION "1.0.0"
+#define DATE "2026-04-25"
 #define AUTHOR "FLAK-ZOSO"
 
 
