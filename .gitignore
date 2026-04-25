@@ -6,3 +6,5 @@ inavjaga
 *.out
 *.log
 .gdb_history
+.deps/
+include/sista/
