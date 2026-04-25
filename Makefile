@@ -50,13 +50,12 @@ inavjaga: $(OBJ)
 	@echo "Inavjaga compiled successfully!"
 endif
 
-$(SISTA_LOCAL_DIR)/%.cpp: | prepare-local-sista
-	@test -f $@ || (echo "Missing vendored Sista source: $@" && false)
+$(SISTA_LOCAL_SRC): | prepare-local-sista
 
 %.o: %.cpp Makefile
 	$(CXX) $(CXXFLAGS) $(DEPFLAGS) -c $< -o $@
 
--include $(DEP)
+-include $(wildcard $(DEP))
 
 prepare-local-sista:
 ifeq ($(USE_LOCAL_SISTA),1)
