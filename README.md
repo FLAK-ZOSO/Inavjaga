@@ -6,7 +6,7 @@
 
 ## Installation
 
-**Warning**: if you want to play on Windows and/or don't want to install the Sista system library on MacOS, check the [`standalone`](https://github.com/FLAK-ZOSO/Inavjaga/tree/standalone) branch and releases with version lower or equal to [`1.0.0-beta.5`](https://github.com/FLAK-ZOSO/Inavjaga/releases/tag/v1.0.0-beta.5).
+On Windows, the `Makefile` can automatically vendor `Sista` from source into `include/sista` and compile it locally.
 
 ### From release executable
 
@@ -39,6 +39,14 @@ git clone https://github.com/FLAK-ZOSO/Inavjaga
 cd Inavjaga
 make
 ```
+
+On Windows (MinGW/MSYS2), build with local vendored Sista sources:
+
+```bash
+make USE_LOCAL_SISTA=1 STATIC=0
+```
+
+The first local build will clone `FLAK-ZOSO/Sista` into `.deps/Sista` and copy `include/sista` from there.
 
 If you don't have `make` installed, you can copy and paste the following commands in your terminal:
 
