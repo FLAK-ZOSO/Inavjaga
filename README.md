@@ -6,8 +6,6 @@
 
 ## Installation
 
-On Windows, the `Makefile` can automatically vendor `Sista` from source into `include/sista` and compile it locally.
-
 ### From release executable
 
 You can download the latest release executable for your operative system from the [releases page](https://github.com/FLAK-ZOSO/Inavjaga/releases).
@@ -17,7 +15,7 @@ https://github.com/user-attachments/assets/9b4b2371-a87a-4a30-b22d-b42b4e279a4a
 This approach is unlikely to work for MacOS users for the following reasons:
 - the game is not signed, so it will be blocked by the system;
 - the game is not statically linked and that's impossible to achieve [by Apple's design choices](https://discussions.apple.com/thread/1945589?sortBy=rank) despite [various attempts](https://github.com/skaht/Csu-85/issues/2) to do so;
-Thus, if you are a MacOS user, you should compile the game from source as explained below.
+Thus, if you are a MacOS user, you should compile the game (and the sista library) from source as explained below.
 
 ### From source
 
@@ -40,15 +38,21 @@ cd Inavjaga
 make
 ```
 
-On Windows (MinGW/MSYS2), build with local vendored Sista sources:
+On Windows (MinGW/MSYS2), the `Makefile` can automatically [vendor](https://stackoverflow.com/questions/26217488/what-is-vendoring) `Sista` from source into `include/sista` and compile it locally.
 
 ```bash
-make USE_LOCAL_SISTA=1 STATIC=0
+make USE_LOCAL_SISTA=1 STATIC=1
 ```
 
 The first local build will clone `FLAK-ZOSO/Sista` into `.deps/Sista` and copy `include/sista` from there.
 
-If you don't have `make` installed, you can copy and paste the following commands in your terminal:
+If you don't have `make` installed, you can copy and paste the following commands in your terminal after having manually copied [`FLAK-ZOSO/Sista:/include](https://github.com/FLAK-ZOSO/Sista/tree/main/include/sista) to the right location:
+
+```bash
+git clone https://github.com/FLAK-ZOSO/Sista
+cp -r Sista/include/* include/
+```
+_How to do that in Bash_
 
 ```bash
 g++ -std=c++17 -Wpedantic -Wno-narrowing -g -c inavjaga.cpp -o inavjaga.o
