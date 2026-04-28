@@ -129,7 +129,7 @@ void Archer::move() {
             std::sort(centermost_breaches.begin(), centermost_breaches.end(), [](int a, int b) {
                 return std::abs(a - WIDTH/2) < std::abs(b - WIDTH/2);
             });
-            next_passage_x = centermost_breaches[randomIndex(centermost_breaches.size())];
+            next_passage_x = centermost_breaches[(reinterpret_cast<intptr_t>(this)) % centermost_breaches.size()];
         }
     } else {
         // If no breaches are found, then it points to any passage of the following level (random and not necessarily deterministic)
