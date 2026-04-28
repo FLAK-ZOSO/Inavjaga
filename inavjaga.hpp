@@ -12,6 +12,7 @@
 #include "src/wall.hpp"
 #include "src/enemyBullet.hpp"
 #include "src/archer.hpp"
+#include <random>
 #include <vector>
 #include <set>
 #include <map>
