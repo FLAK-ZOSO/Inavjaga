@@ -72,6 +72,7 @@ Worm::Worm(sista::Coordinates coordinates, Direction direction) : Worm(coordinat
     this->direction = direction;
 }
 void Worm::move() {
+    static std::uniform_int_distribution<int>binaryDirectionDistribution(0, 1);
     sista::Coordinates oldHeadCoordinates = coordinates;
     sista::Coordinates next = coordinates + directionMap[direction];
     if (field->isOutOfBounds(next)) {
@@ -79,7 +80,7 @@ void Worm::move() {
         Direction toTheRight = (Direction)((direction + 1) % 4);
         Direction turningOptions[] = {toTheLeft, toTheRight};
         Direction oldDirection = direction;
-        direction = turningOptions[std::uniform_int_distribution<int>(0, 1)(rng)];
+        direction = turningOptions[binaryDirectionDistribution(rng)];
         next = coordinates + directionMap[direction];
         if (field->isOutOfBounds(next)) {
             if (direction == toTheLeft) {
