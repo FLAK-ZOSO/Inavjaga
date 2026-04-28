@@ -6,6 +6,7 @@
 #include "wall.hpp"
 #include <unordered_map>
 #include <memory>
+#include <random>
 
 extern std::unordered_map<Direction, char> directionSymbol;
 extern std::unordered_map<Direction, sista::Coordinates> directionMap;
@@ -15,6 +16,19 @@ extern std::bernoulli_distribution dumbMoveDistribution;
 extern bool dead;
 enum EndReason {STARVED, SHOT, EATEN, STABBED, TOUCHDOWN, QUIT};
 void printEndInformation(EndReason);
+
+namespace {
+inline Direction randomDirection() {
+    static std::uniform_int_distribution<int> directionDistribution(0, 3);
+    return static_cast<Direction>(directionDistribution(rng));
+}
+
+inline Direction randomTurnDirection() {
+    static const Direction turnOptions[2] = {Direction::LEFT, Direction::RIGHT};
+    static std::uniform_int_distribution<int> turnDistribution(0, 1);
+    return turnOptions[turnDistribution(rng)];
+}
+}
 
 WormBody::WormBody(sista::Coordinates coordinates, Direction direction) : Entity(directionSymbol[direction], coordinates, wormBodyStyle, Type::WORM_BODY) {
     // ownership moved to creator via std::shared_ptr; do not push here
@@ -52,12 +66,13 @@ sista::ANSISettings WormBody::wormBodyStyle = {
 };
 
 Worm::Worm(sista::Coordinates coordinates) : Entity('H', coordinates, wormHeadStyle, Type::WORM_HEAD), hp(WORM_HEALTH_POINTS), collided(false) {
-    direction = (Direction)(rand() % 4);
+    direction = randomDirection();
 }
 Worm::Worm(sista::Coordinates coordinates, Direction direction) : Worm(coordinates) {
     this->direction = direction;
 }
 void Worm::move() {
+    static std::uniform_int_distribution<int>binaryDirectionDistribution(0, 1);
     sista::Coordinates oldHeadCoordinates = coordinates;
     sista::Coordinates next = coordinates + directionMap[direction];
     if (field->isOutOfBounds(next)) {
@@ -65,7 +80,7 @@ void Worm::move() {
         Direction toTheRight = (Direction)((direction + 1) % 4);
         Direction turningOptions[] = {toTheLeft, toTheRight};
         Direction oldDirection = direction;
-        direction = turningOptions[rand() % 2];
+        direction = turningOptions[binaryDirectionDistribution(rng)];
         next = coordinates + directionMap[direction];
         if (field->isOutOfBounds(next)) {
             if (direction == toTheLeft) {
@@ -118,14 +133,14 @@ void Worm::move() {
         Entity* entity = (Entity*)field->getPawn(next);
         switch (entity->type) {
             case Type::PLAYER:
-                this->turn(options[rand() % 2]);
+                this->turn(randomTurnDirection());
                 printEndInformation(EndReason::EATEN);
                 dead = true;
                 break;
             case Type::WALL:
                 if (((Wall*)entity)->strength > 1)
                     ((Wall*)entity)->takeHit(); // They can weaken a wall but not destroy it
-                this->turn(options[rand() % 2]);
+                this->turn(randomTurnDirection());
                 break;
             case Type::WORM_HEAD:
                 if (((Worm*)entity)->hp <= 1) {
@@ -133,24 +148,24 @@ void Worm::move() {
                 }
                 ((Worm*)entity)->takeHit();
             case Type::PORTAL:
-                this->turn(options[rand() % 2]);
+                this->turn(randomTurnDirection());
                 break;
             case Type::WORM_BODY:
                 if (!eatingTail(rng)) {
-                    this->turn(options[rand() % 2]);
+                    this->turn(randomTurnDirection());
                     break;
                 }
                 ((WormBody*)entity)->die();
                 break;
             case Type::ARCHER:
                 if (!eatingArcher(rng)) {
-                    this->turn(options[rand() % 2]);
+                    this->turn(randomTurnDirection());
                     break;
                 }
                 break;
             case Type::MINE:
                 ((Mine*)entity)->trigger();
-                this->turn(options[rand() % 2]);
+                this->turn(randomTurnDirection());
                 break;
             default:
                 entity->remove();
@@ -159,11 +174,11 @@ void Worm::move() {
 }
 void Worm::turn() {
     if (dumbMoveDistribution(rng)) {
-        this->turn(options[rand() % 2]);
+        this->turn(randomTurnDirection());
         return;
     }
     // TODO: proper turning intelligence
-    this->turn(options[rand() % 2]);
+    this->turn(randomTurnDirection());
 }
 void Worm::turn(Direction direction_) {
     if (direction_ == Direction::LEFT)

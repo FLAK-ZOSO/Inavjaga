@@ -12,11 +12,13 @@
 #include "src/wall.hpp"
 #include "src/enemyBullet.hpp"
 #include "src/archer.hpp"
+#include <random>
 #include <vector>
 #include <set>
 #include <map>
 
 extern std::set<char> movementKeys;
+extern std::random_device randomDevice;
 extern std::mt19937 rng;
 extern std::map<int, std::vector<int>> passages; // {y, {x1, x2, x3...}}
 extern std::map<int, std::vector<int>> breaches; // {y, {x1, x2, x3...}}
