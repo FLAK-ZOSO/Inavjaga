@@ -12,6 +12,7 @@
 #include <map>
 #include <set>
 #include <memory>
+#include <random>
 
 extern std::unordered_map<Direction, char> directionSymbol;
 extern std::unordered_map<Direction, sista::Coordinates> directionMap;
@@ -24,13 +25,25 @@ extern bool dead;
 enum EndReason {STARVED, SHOT, EATEN, STABBED, TOUCHDOWN, QUIT};
 void printEndInformation(EndReason);
 
+namespace {
+inline Direction randomDirection() {
+    static std::uniform_int_distribution<int> directionDistribution(0, 3);
+    return static_cast<Direction>(directionDistribution(rng));
+}
+
+inline std::size_t randomIndex(std::size_t upperBound) {
+    std::uniform_int_distribution<std::size_t> distribution(0, upperBound - 1);
+    return distribution(rng);
+}
+}
+
 Archer::Archer(sista::Coordinates coordinates) : Entity('A', coordinates, archerStyle, Type::ARCHER) {
     // ownership moved to creator via std::shared_ptr; do not push here
 }
 void Archer::move() {
     // There is always a probability of a dumb move
     if (dumbMoveDistribution(rng)) {
-        Direction direction = (Direction)(rand() % 4);
+        Direction direction = randomDirection();
         this->move(direction);
         return;
     }
@@ -102,7 +115,7 @@ void Archer::move() {
             this->move(chosenMove);
             return;
         } else {
-            Direction direction = (Direction)(rand() % 4);
+            Direction direction = randomDirection();
             this->move(direction);
             return;
         }
@@ -116,13 +129,13 @@ void Archer::move() {
             std::sort(centermost_breaches.begin(), centermost_breaches.end(), [](int a, int b) {
                 return std::abs(a - WIDTH/2) < std::abs(b - WIDTH/2);
             });
-            next_passage_x = centermost_breaches[(reinterpret_cast<intptr_t>(this)) % centermost_breaches.size()];
+            next_passage_x = centermost_breaches[randomIndex(centermost_breaches.size())];
         }
     } else {
         // If no breaches are found, then it points to any passage of the following level (random and not necessarily deterministic)
         std::vector<int> available_passages = passages[next_passage_y];
         if (!available_passages.empty()) {
-            next_passage_x = available_passages[rand() % available_passages.size()];
+            next_passage_x = available_passages[randomIndex(available_passages.size())];
         } else {
             // If there is no passage on the next, it means we're pointing to a negative coordinate
             // It is dangerous as generating coordinates from that could lead to segmentation faults
@@ -165,7 +178,7 @@ bool Archer::move(Direction direction) {
 }
 void Archer::shoot() {
     if (dumbMoveDistribution(rng)) {
-        this->shoot((Direction)(rand() % 4));
+        this->shoot(randomDirection());
         return;
     }
     if (coordinates.x == Player::player->getCoordinates().x) {
@@ -180,7 +193,7 @@ void Archer::shoot() {
                     return;
                 }
             }
-            this->shoot((Direction)(rand() % 4));
+            this->shoot(randomDirection());
             return;
         }
         if (coordinates.y < Player::player->getCoordinates().y) {
@@ -204,7 +217,7 @@ void Archer::shoot() {
             this->move(Direction::LEFT); // Dodges incoming bullets
         }
     } else {
-        this->shoot((Direction)(rand() % 4));
+        this->shoot(randomDirection());
     }
 }
 bool Archer::shoot(Direction direction) {

@@ -8,6 +8,7 @@
 #include <mutex>
 #include <stack>
 #include <iostream>
+#include <random>
 
 std::shared_ptr<Player> Player::player;
 std::vector<std::shared_ptr<Wall>> Wall::walls;
@@ -43,7 +44,8 @@ int main(int argc, char* argv[]) {
     #endif
     std::ios_base::sync_with_stdio(false);
     sista::resetAnsi(); // Reset the settings
-    srand(time(0)); // Seed the random number generator
+    int seed = randomDevice();
+    rng.seed(seed);
 
     field = std::make_shared<sista::SwappableField>(WIDTH, HEIGHT);
     generateTunnels();
@@ -616,8 +618,9 @@ void spawnInitialEnemies() {
 }
 
 void spawnEnemies() {
+    std::uniform_int_distribution<int> columnDistribution(0, WIDTH - 1);
     if (Archer::spawning(rng)) {
-        sista::Coordinates coords = {HEIGHT - 1, (unsigned short)(rand() % WIDTH)};
+        sista::Coordinates coords = {HEIGHT - 1, (unsigned short)columnDistribution(rng)};
         if (field->isFree(coords)) {
             auto a = std::make_shared<Archer>(coords);
             Archer::archers.push_back(a);
@@ -625,7 +628,7 @@ void spawnEnemies() {
         }
     }
     if (Worm::spawning(rng)) {
-        sista::Coordinates coords = {HEIGHT - 1, (unsigned short)(rand() % WIDTH)};
+        sista::Coordinates coords = {HEIGHT - 1, (unsigned short)columnDistribution(rng)};
         if (field->isFree(coords)) {
             auto w = std::make_shared<Worm>(coords, Direction::UP);
             Worm::worms.push_back(w);
@@ -798,7 +801,8 @@ std::unordered_map<Direction, char> directionSymbol = {
 std::set<char> movementKeys = {
     'w', 'W', 'd', 'D', 's', 'S', 'a', 'A'
 };
-std::mt19937 rng(std::chrono::system_clock::now().time_since_epoch().count());
+std::random_device randomDevice;
+std::mt19937 rng(randomDevice());
 std::map<int, std::vector<int>> passages; // Lateral passages, "main tunnel" tresholds
 std::map<int, std::vector<int>> breaches; // Central breaches, "holes"
 std::bernoulli_distribution dumbMoveDistribution(DUMB_MOVE_PROBABILITY);
