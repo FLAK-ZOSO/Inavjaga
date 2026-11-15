@@ -65,10 +65,13 @@ int main(int argc, char* argv[]) {
     for (int i=0; !end; i++) {
         while (pause_) {
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            if (!pause_) {
-                std::lock_guard<std::mutex> lock(streamMutex); // Lock stays until scope ends
-                reprint();
-            } // Reprint after unpausing, just as a tool for allowing resizing
+            {
+                std::lock_guard<std::mutex> lock(streamMutex);
+                if (!pause_) reprint(); // Reprint after unpausing to allow resizing.
+                // Paused actions still draw and change inventory; show them without advancing a frame.
+                printSideInstructions(i);
+                std::flush(std::cout);
+            }
             if (end) break;
         }
         {
