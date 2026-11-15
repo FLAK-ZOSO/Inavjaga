@@ -65,10 +65,13 @@ int main(int argc, char* argv[]) {
     for (int i=0; !end; i++) {
         while (pause_) {
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            if (!pause_) {
-                std::lock_guard<std::mutex> lock(streamMutex); // Lock stays until scope ends
-                reprint();
-            } // Reprint after unpausing, just as a tool for allowing resizing
+            {
+                std::lock_guard<std::mutex> lock(streamMutex);
+                if (!pause_) reprint(); // Reprint after unpausing to allow resizing.
+                // Paused actions still draw and change inventory; show them without advancing a frame.
+                printSideInstructions(i);
+                std::flush(std::cout);
+            }
             if (end) break;
         }
         {
@@ -630,50 +633,50 @@ void act(char input_) {
     switch (input_) {
         case 'w': case 'W': {
             std::scoped_lock<std::mutex> lock(streamMutex);
-            if (pause_) break;
+            if (pause_ && !ALLOW_MOVEMENT_WHILE_PAUSED) break;
             Player::player->move(Direction::UP);
             break;
         }
         case 'a': case 'A': {
             std::scoped_lock<std::mutex> lock(streamMutex);
-            if (pause_) break;
+            if (pause_ && !ALLOW_MOVEMENT_WHILE_PAUSED) break;
             Player::player->move(Direction::LEFT);
             break;
         }
         case 's': case 'S': {
             std::scoped_lock<std::mutex> lock(streamMutex);
-            if (pause_) break;
+            if (pause_ && !ALLOW_MOVEMENT_WHILE_PAUSED) break;
             Player::player->move(Direction::DOWN);
             break;
         }
         case 'd': case 'D': {
             std::scoped_lock<std::mutex> lock(streamMutex);
-            if (pause_) break;
+            if (pause_ && !ALLOW_MOVEMENT_WHILE_PAUSED) break;
             Player::player->move(Direction::RIGHT);
             break;
         }
 
         case 'j': case 'J': {
             std::scoped_lock<std::mutex> lock(streamMutex);
-            if (pause_) break;
+            if (pause_ && !ALLOW_INTERACTIONS_WHILE_PAUSED) break;
             Player::player->shoot(Direction::LEFT);
             break;
         }
         case 'k': case 'K': {
             std::scoped_lock<std::mutex> lock(streamMutex);
-            if (pause_) break;
+            if (pause_ && !ALLOW_INTERACTIONS_WHILE_PAUSED) break;
             Player::player->shoot(Direction::DOWN);
             break;
         }
         case 'l': case 'L': {
             std::scoped_lock<std::mutex> lock(streamMutex);
-            if (pause_) break;
+            if (pause_ && !ALLOW_INTERACTIONS_WHILE_PAUSED) break;
             Player::player->shoot(Direction::RIGHT);
             break;
         }
         case 'i': case 'I': {
             std::scoped_lock<std::mutex> lock(streamMutex);
-            if (pause_) break;
+            if (pause_ && !ALLOW_INTERACTIONS_WHILE_PAUSED) break;
             Player::player->shoot(Direction::UP);
             break;
         }
