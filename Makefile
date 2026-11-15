@@ -2,11 +2,18 @@
 CXX = g++
 CXXFLAGS = -std=c++17 -Wpedantic -Wall -Wno-narrowing -g
 DEPFLAGS = -MMD -MP
+INSTALL ?= install
+STRIP ?= strip
+prefix ?= /usr/local
+exec_prefix ?= $(prefix)
+bindir ?= $(exec_prefix)/bin
+DESTDIR ?=
 
 # Set USE_LOCAL_SISTA=1 to compile Sista from vendored sources in include/sista.
 # Windows defaults to local sources to avoid relying on system-wide library installs.
 ifeq ($(OS),Windows_NT)
 USE_LOCAL_SISTA ?= 1
+EXEEXT = .exe
 THREAD_LDFLAGS =
 else
 USE_LOCAL_SISTA ?= 0
@@ -35,16 +42,18 @@ STATIC ?= 1
 OBJ = $(SRC:.cpp=.o)
 DEP = $(OBJ:.o=.d)
 
-all: inavjaga
+PROGRAM = inavjaga$(EXEEXT)
+
+all: $(PROGRAM)
 
 ifeq ($(STATIC),1)
-inavjaga: $(OBJ)
+$(PROGRAM): $(OBJ)
 	@echo "Trying to link statically..."
 	@($(CXX) $(CXXFLAGS) -static -o $@ $^ $(LDFLAGS) || \
 	  $(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS))
 	@echo "Inavjaga compiled successfully!"
 else
-inavjaga: $(OBJ)
+$(PROGRAM): $(OBJ)
 	@echo "Linking dynamically..."
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 	@echo "Inavjaga compiled successfully!"
@@ -80,6 +89,13 @@ else
 	@echo "USE_LOCAL_SISTA=0, skipping local Sista vendoring"
 endif
 
+install: $(PROGRAM)
+	$(INSTALL) -d "$(DESTDIR)$(bindir)"
+	$(INSTALL) -m 755 "$(PROGRAM)" "$(DESTDIR)$(bindir)/$(PROGRAM)"
+
+install-strip: install
+	$(STRIP) "$(DESTDIR)$(bindir)/$(PROGRAM)"
+
 clean:
 	rm -f *.o
 	rm -f src/*.o
@@ -88,4 +104,4 @@ clean:
 	rm -f src/*.d
 	rm -f include/sista/*.d
 
-.PHONY: all clean prepare-local-sista
+.PHONY: all install install-strip clean prepare-local-sista
