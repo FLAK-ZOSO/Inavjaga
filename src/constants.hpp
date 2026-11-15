@@ -16,7 +16,8 @@
 #define PORTALS_PER_LINE 2 // How many portals are there across each wall
 
 // Game speed
-#define ALLOW_MOVEMENT_WHILE_PAUSED 0 // Set to 1 to enable flash movement while other characters are frozen
+#define ALLOW_MOVEMENT_WHILE_PAUSED 0 // Set to 1 to allow player movement while paused
+#define ALLOW_INTERACTIONS_WHILE_PAUSED 0 // Set to 1 to allow shooting, collecting, depositing, and placing items while paused
 #define FRAME_DURATION 100 // Expressed in milliseconds
 #define BULLET_SPEED 1 // How many cells a bullet travels in one frame
 

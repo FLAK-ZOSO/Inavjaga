@@ -655,25 +655,25 @@ void act(char input_) {
 
         case 'j': case 'J': {
             std::scoped_lock<std::mutex> lock(streamMutex);
-            if (pause_) break;
+            if (pause_ && !ALLOW_INTERACTIONS_WHILE_PAUSED) break;
             Player::player->shoot(Direction::LEFT);
             break;
         }
         case 'k': case 'K': {
             std::scoped_lock<std::mutex> lock(streamMutex);
-            if (pause_) break;
+            if (pause_ && !ALLOW_INTERACTIONS_WHILE_PAUSED) break;
             Player::player->shoot(Direction::DOWN);
             break;
         }
         case 'l': case 'L': {
             std::scoped_lock<std::mutex> lock(streamMutex);
-            if (pause_) break;
+            if (pause_ && !ALLOW_INTERACTIONS_WHILE_PAUSED) break;
             Player::player->shoot(Direction::RIGHT);
             break;
         }
         case 'i': case 'I': {
             std::scoped_lock<std::mutex> lock(streamMutex);
-            if (pause_) break;
+            if (pause_ && !ALLOW_INTERACTIONS_WHILE_PAUSED) break;
             Player::player->shoot(Direction::UP);
             break;
         }
