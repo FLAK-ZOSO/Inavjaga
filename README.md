@@ -90,6 +90,18 @@ inavjaga.exe
 
 If you compile the game from source, you will be able to customize and rebalance the game by editing the `constants.hpp` file and not only.
 
+### Actual installation
+
+
+To install the executable, use `make install` (symbols preserved) or
+`make install-strip` (symbols stripped). Both default to `/usr/local/bin`.
+
+```bash
+make install-strip prefix="$HOME/.local"
+```
+
+The build executable retains its symbols regardless.
+
 ## Description
 
 ### Purpose
