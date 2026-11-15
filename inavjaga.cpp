@@ -630,25 +630,25 @@ void act(char input_) {
     switch (input_) {
         case 'w': case 'W': {
             std::scoped_lock<std::mutex> lock(streamMutex);
-            if (pause_) break;
+            if (pause_ && !ALLOW_MOVEMENT_WHILE_PAUSED) break;
             Player::player->move(Direction::UP);
             break;
         }
         case 'a': case 'A': {
             std::scoped_lock<std::mutex> lock(streamMutex);
-            if (pause_) break;
+            if (pause_ && !ALLOW_MOVEMENT_WHILE_PAUSED) break;
             Player::player->move(Direction::LEFT);
             break;
         }
         case 's': case 'S': {
             std::scoped_lock<std::mutex> lock(streamMutex);
-            if (pause_) break;
+            if (pause_ && !ALLOW_MOVEMENT_WHILE_PAUSED) break;
             Player::player->move(Direction::DOWN);
             break;
         }
         case 'd': case 'D': {
             std::scoped_lock<std::mutex> lock(streamMutex);
-            if (pause_) break;
+            if (pause_ && !ALLOW_MOVEMENT_WHILE_PAUSED) break;
             Player::player->move(Direction::RIGHT);
             break;
         }
