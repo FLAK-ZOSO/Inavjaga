@@ -92,7 +92,6 @@ If you compile the game from source, you will be able to customize and rebalance
 
 ### Actual installation
 
-
 To install the executable, use `make install` (symbols preserved) or
 `make install-strip` (symbols stripped). Both default to `/usr/local/bin`.
 

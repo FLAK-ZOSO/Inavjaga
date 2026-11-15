@@ -39,7 +39,7 @@
 
 // Coordinates
 #define SPAWN_COORDINATES {TUNNEL_UNIT,WIDTH-TUNNEL_UNIT} // The coordinates where the player spawns
-#define RESPAWN_COORDINATES {TUNNEL_UNIT,WIDTH-TUNNEL_UNIT} // The coordinates where the player respawns after death
+#define RESPAWN_COORDINATES {TUNNEL_UNIT,WIDTH-TUNNEL_UNIT} // Preferred respawn cell; falls back to the nearest free cell
 
 // Colors
 #define RGB_BLACK sista::RGBColor(0,0,0)

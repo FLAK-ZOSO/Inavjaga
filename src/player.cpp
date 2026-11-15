@@ -5,6 +5,8 @@
 #include "bullet.hpp"
 #include "mine.hpp"
 #include <memory>
+#include <cstdlib>
+#include <limits>
 
 const Inventory INITIAL_INVENTORY {
     INITIAL_CLAY,
@@ -23,6 +25,32 @@ void Player::remove() {
     if (Player::player.get() == this) {
         Player::player.reset();
     }
+}
+/** \brief Respawns the player at the closest available position from the spawn point
+ * \retval false when no free cell is available; the caller can retry next frame.
+ * \return whether the respawn was possible and thus took place
+ */
+bool Player::respawn(const sista::Coordinates& preferred) {
+    sista::Coordinates destination = preferred;
+    if (field->isOutOfBounds(destination) || !field->isFree(destination)) {
+        int nearestDistance = std::numeric_limits<int>::max();
+        // Search the whole field: the configured respawn need not be in the home area.
+        // The player's current cell stays occupied so it remains available for the death chest.
+        for (int y = 0; y < HEIGHT; ++y) {
+            for (int x = 0; x < WIDTH; ++x) {
+                sista::Coordinates candidate(y, x);
+                if (!field->isFree(candidate)) continue;
+                int distance = std::abs(y - int(preferred.y)) + std::abs(x - int(preferred.x));
+                if (distance < nearestDistance) {
+                    nearestDistance = distance;
+                    destination = candidate;
+                }
+            }
+        }
+        if (nearestDistance == std::numeric_limits<int>::max()) return false;
+    }
+    field->movePawn(this, destination);
+    return true;
 }
 void Player::move(Direction direction) {
     sista::Coordinates next = this->coordinates + directionMap[direction];
