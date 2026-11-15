@@ -71,21 +71,22 @@ int main(int argc, char* argv[]) {
             } // Reprint after unpausing, just as a tool for allowing resizing
             if (end) break;
         }
-        if (dead) {
-            dead = false;
-            lastDeathFrame = i;
-            sista::Coordinates deathCoordinates = Player::player->getCoordinates();
-            sista::Coordinates respawnCoordinates = RESPAWN_COORDINATES;
-            field->movePawn(Player::player.get(), respawnCoordinates);
-            #if DROP_INVENTORY_ON_DEATH
-            {
-                auto c = std::make_shared<Chest>(deathCoordinates, Inventory{Player::player->inventory.clay, Player::player->inventory.bullets, 0});
-                Chest::chests.push_back(c);
-                field->addPrintPawn(c);
+        {
+            std::lock_guard<std::mutex> lock(streamMutex);
+            const sista::Coordinates deathCoordinates = Player::player->getCoordinates();
+            if (dead && Player::player->respawn(sista::Coordinates RESPAWN_COORDINATES)) {
+                dead = false;
+                lastDeathFrame = i;
+                #if DROP_INVENTORY_ON_DEATH
+                {
+                    auto c = std::make_shared<Chest>(deathCoordinates, Inventory{Player::player->inventory.clay, Player::player->inventory.bullets, 0});
+                    Chest::chests.push_back(c);
+                    field->addPrintPawn(c);
+                }
+                #endif
+                Player::player->inventory.clay = 0;
+                Player::player->inventory.bullets = 0;
             }
-            #endif
-            Player::player->inventory.clay = 0;
-            Player::player->inventory.bullets = 0;
         }
         if (lastDeathFrame && i - lastDeathFrame == 20) {
             // After 20 frames it deletes the death reason
@@ -228,6 +229,7 @@ int main(int argc, char* argv[]) {
     #ifdef __APPLE__
         tcsetattr(0, TCSANOW, &orig_termios);
     #endif
+    return 0;
 }
 
 bool endConditions() {

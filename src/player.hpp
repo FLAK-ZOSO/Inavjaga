@@ -23,6 +23,7 @@ public:
     Player(sista::Coordinates);
     void remove() override;
 
+    bool respawn(const sista::Coordinates& preferred);
     void move(Direction);
     void shoot(Direction);
 };
