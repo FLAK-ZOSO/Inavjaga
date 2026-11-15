@@ -46,7 +46,7 @@ make USE_LOCAL_SISTA=1 STATIC=1
 
 The first local build will clone `FLAK-ZOSO/Sista` into `.deps/Sista` and copy `include/sista` from there.
 
-If you don't have `make` installed, you can copy and paste the following commands in your terminal after having manually copied [`FLAK-ZOSO/Sista:/include](https://github.com/FLAK-ZOSO/Sista/tree/main/include/sista) to the right location:
+If you don't have `make` installed, you can copy and paste the following commands in your terminal after having manually copied [`FLAK-ZOSO/Sista:/include`](https://github.com/FLAK-ZOSO/Sista/tree/main/include/sista) to the right location:
 
 ```bash
 git clone https://github.com/FLAK-ZOSO/Sista
